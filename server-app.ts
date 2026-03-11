@@ -3,9 +3,16 @@
  * and server-api.ts (API-only for dev with Vite CLI + proxy).
  */
 import express from "express";
+import { createRequire } from "module";
+import bcrypt from "bcryptjs";
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
+import multer from "multer";
+
+const require = createRequire(import.meta.url);
+const session = require("express-session");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,12 +20,21 @@ const __dirname = path.dirname(__filename);
 const db = new Database("blog.db");
 
 db.exec(`
-  CREATE TABLE IF NOT EXISTS authors (
+  CREATE TABLE IF NOT EXISTS teams (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
     name TEXT,
-    bio TEXT,
-    avatar_url TEXT
+    team_id INTEGER NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('admin', 'member')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES teams(id)
   );
   CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,12 +53,11 @@ db.exec(`
     content TEXT,
     excerpt TEXT,
     featured_image TEXT,
-    author_id INTEGER,
+    user_id INTEGER REFERENCES users(id),
     category_id INTEGER,
     published_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     is_published INTEGER DEFAULT 0,
     reading_time INTEGER,
-    FOREIGN KEY (author_id) REFERENCES authors(id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
   );
   CREATE TABLE IF NOT EXISTS post_tags (
@@ -54,38 +69,106 @@ db.exec(`
   );
 `);
 
-const authorCount = db.prepare("SELECT COUNT(*) as count FROM authors").get() as { count: number };
-if (authorCount.count === 0) {
-  db.prepare("INSERT INTO authors (username, name, bio, avatar_url) VALUES (?, ?, ?, ?)").run(
-    "johndoe",
-    "John Doe",
-    "Senior Software Architect and Tech Writer.",
-    "https://picsum.photos/seed/john/200/200"
-  );
-  db.prepare("INSERT INTO categories (name, slug) VALUES (?, ?)").run("Technology", "technology");
-  db.prepare("INSERT INTO categories (name, slug) VALUES (?, ?)").run("Design", "design");
-  db.prepare("INSERT INTO tags (name, slug) VALUES (?, ?)").run("React", "react");
-  db.prepare("INSERT INTO tags (name, slug) VALUES (?, ?)").run("SEO", "seo");
+// Migration: add username, bio, avatar_url to users (for author display)
+const userCols = db.prepare("PRAGMA table_info(users)").all() as { name: string }[];
+if (!userCols.some((c) => c.name === "username")) {
+  db.prepare("ALTER TABLE users ADD COLUMN username TEXT").run();
+}
+if (!userCols.some((c) => c.name === "bio")) {
+  db.prepare("ALTER TABLE users ADD COLUMN bio TEXT").run();
+}
+if (!userCols.some((c) => c.name === "avatar_url")) {
+  db.prepare("ALTER TABLE users ADD COLUMN avatar_url TEXT").run();
+}
+
+// Migration: add user_id to posts (content creator = author)
+const postCols = db.prepare("PRAGMA table_info(posts)").all() as { name: string }[];
+if (!postCols.some((c) => c.name === "user_id")) {
+  db.prepare("ALTER TABLE posts ADD COLUMN user_id INTEGER REFERENCES users(id)").run();
+}
+
+// Backfill user_id from author_id (existing DBs that had authors table and author_id on users)
+const postColsAfter = db.prepare("PRAGMA table_info(posts)").all() as { name: string }[];
+const hasAuthorIdOnPosts = postColsAfter.some((c) => c.name === "author_id");
+const userColsAfter = db.prepare("PRAGMA table_info(users)").all() as { name: string }[];
+const hasAuthorIdOnUsers = userColsAfter.some((c) => c.name === "author_id");
+const authorTableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='authors'").get();
+if (hasAuthorIdOnPosts && authorTableExists && hasAuthorIdOnUsers) {
+  const postsToBackfill = db.prepare("SELECT id, author_id FROM posts WHERE user_id IS NULL AND author_id IS NOT NULL").all() as { id: number; author_id: number }[];
+  for (const row of postsToBackfill) {
+    const u = db.prepare("SELECT id FROM users WHERE author_id = ?").get(row.author_id) as { id: number } | undefined;
+    if (u) db.prepare("UPDATE posts SET user_id = ? WHERE id = ?").run(u.id, row.id);
+  }
+}
+
+// Backfill username for users that don't have one (from authors table or email)
+if (authorTableExists && hasAuthorIdOnUsers) {
+  const usersWithAuthor = db.prepare("SELECT u.id, a.username FROM users u JOIN authors a ON u.author_id = a.id WHERE u.username IS NULL OR u.username = ''").all() as { id: number; username: string }[];
+  const used = new Set<string>();
+  for (const row of usersWithAuthor) {
+    let uname = row.username;
+    let n = 0;
+    while (used.has(uname)) {
+      n++;
+      uname = row.username + "_" + n;
+    }
+    used.add(uname);
+    db.prepare("UPDATE users SET username = ? WHERE id = ?").run(uname, row.id);
+  }
+}
+const usersWithoutUsername = db.prepare("SELECT id, email FROM users WHERE username IS NULL OR username = ''").all() as { id: number; email: string }[];
+const usedUsernames = new Set<string>();
+for (const u of usersWithoutUsername) {
+  let base = u.email.replace(/@.*/, "").replace(/[^a-z0-9]/gi, "") || "user";
+  let username = base;
+  let n = 0;
+  while (usedUsernames.has(username)) {
+    n++;
+    username = base + "_" + n;
+  }
+  usedUsernames.add(username);
+  db.prepare("UPDATE users SET username = ? WHERE id = ?").run(username, u.id);
+}
+
+// Remove authors table so there is no conflict; all author data now comes from users (creator = author).
+// Disable FK checks so we can drop authors even if posts/users still have FK references to it (legacy schema).
+db.prepare("PRAGMA foreign_keys = OFF").run();
+db.prepare("DROP TABLE IF EXISTS authors").run();
+db.prepare("PRAGMA foreign_keys = ON").run();
+
+// Fresh DB seed: one admin user + minimal data (one team, one category, one tag, one sample post)
+const teamCount = db.prepare("SELECT COUNT(*) as count FROM teams").get() as { count: number };
+if (teamCount.count === 0) {
+  db.prepare("INSERT INTO teams (name, slug) VALUES (?, ?)").run("Default", "default");
+  const defaultTeamId = db.prepare("SELECT id FROM teams WHERE slug = ?").get("default") as { id: number };
+  const hash = bcrypt.hashSync("admin123", 10);
   db.prepare(`
-    INSERT INTO posts (title, slug, content, excerpt, featured_image, author_id, category_id, is_published, reading_time)
+    INSERT INTO users (email, password_hash, name, team_id, role, username)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).run("admin@lumina.com", hash, "Admin", defaultTeamId.id, "admin", "admin");
+  const adminUser = db.prepare("SELECT id FROM users WHERE email = ?").get("admin@lumina.com") as { id: number };
+  db.prepare("INSERT INTO categories (name, slug) VALUES (?, ?)").run("General", "general");
+  db.prepare("INSERT INTO tags (name, slug) VALUES (?, ?)").run("Blog", "blog");
+  db.prepare(`
+    INSERT INTO posts (title, slug, content, excerpt, featured_image, user_id, category_id, is_published, reading_time)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    "Building SEO-Friendly React Apps",
-    "building-seo-friendly-react-apps",
-    "# Introduction\n\nSEO is crucial for any blog. In this article, we'll explore how to build SEO-friendly apps using React.\n\n## Why SEO Matters\n\nSearch engines need to crawl your content effectively...\n\n### Metadata\n\nUsing tools like React Helmet helps manage your head tags.",
-    "Learn the best practices for building high-performance, SEO-optimized React applications.",
-    "https://picsum.photos/seed/seo/1200/630",
+    "Welcome to your blog",
+    "welcome",
+    "# Welcome\n\nThis is your first post. Edit or delete it and start writing.",
+    "Your first post.",
+    "",
+    adminUser.id,
     1,
     1,
-    1,
-    5
+    1
   );
 }
 
 const postsBaseQuery = `
-  SELECT p.*, a.name as author_name, a.username as author_username, a.avatar_url as author_avatar, c.name as category_name, c.slug as category_slug
+  SELECT p.*, u.name as author_name, u.username as author_username, u.avatar_url as author_avatar, c.name as category_name, c.slug as category_slug
   FROM posts p
-  JOIN authors a ON p.author_id = a.id
+  JOIN users u ON p.user_id = u.id
   JOIN categories c ON p.category_id = c.id
   WHERE p.is_published = 1
 `;
@@ -101,13 +184,143 @@ function addTagsToPosts(posts: any[]) {
   });
 }
 
+const uploadsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "uploads");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname || "") || ".jpg";
+      const safe = (file.originalname || "image").replace(/[^a-zA-Z0-9.-]/g, "_");
+      cb(null, `${Date.now()}-${safe}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const ok = /^image\/(jpeg|png|gif|webp)$/i.test(file.mimetype);
+    cb(null, ok);
+  },
+});
+
 export function createApp(options: { baseUrl?: string }) {
   const baseUrl = options.baseUrl || "http://localhost:3000";
   const app = express();
   app.use(express.json());
+  app.use("/uploads", express.static(uploadsDir));
+
+  type SessionWithUser = { userId?: number; email?: string; name?: string; teamId?: number; teamName?: string; role?: "admin" | "member" };
+  const sessionSecret = process.env.SESSION_SECRET || "dev-secret-change-in-production";
+  app.use(
+    session({
+      secret: sessionSecret,
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      },
+    })
+  );
+
+  type SessionUser = { id: number; email: string; name: string; team_id: number; team_name: string; role: "admin" | "member" };
+  function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const sess = req.session as SessionWithUser;
+    if (sess?.userId == null) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    const row = db.prepare(`
+      SELECT u.id, u.email, u.name, u.team_id, u.role, t.name as team_name
+      FROM users u
+      JOIN teams t ON t.id = u.team_id
+      WHERE u.id = ?
+    `).get(sess.userId) as { id: number; email: string; name: string; team_id: number; team_name: string; role: "admin" | "member" } | undefined;
+    if (!row) {
+      req.session.destroy(() => {});
+      return res.status(401).json({ error: "User not found" });
+    }
+    (req as express.Request & { user: SessionUser }).user = {
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      team_id: row.team_id,
+      team_name: row.team_name,
+      role: row.role,
+    };
+    next();
+  }
+  function requireRole(role: "admin" | "member") {
+    return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      const user = (req as express.Request & { user?: SessionUser }).user;
+      if (!user || user.role !== role) return res.status(403).json({ error: "Forbidden" });
+      next();
+    };
+  }
+
+  app.post("/api/auth/login", (req, res) => {
+    const { email, password } = req.body || {};
+    if (!email || !password) return res.status(400).json({ error: "Email and password required" });
+    const user = db.prepare(`
+      SELECT u.id, u.email, u.name, u.team_id, u.password_hash, u.role, t.name as team_name
+      FROM users u
+      JOIN teams t ON t.id = u.team_id
+      WHERE u.email = ?
+    `).get(email) as { id: number; email: string; name: string; team_id: number; password_hash: string; role: "admin" | "member"; team_name: string } | undefined;
+    if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+    const sess = req.session as SessionWithUser;
+    sess.userId = user.id;
+    sess.email = user.email;
+    sess.name = user.name;
+    sess.teamId = user.team_id;
+    sess.teamName = user.team_name;
+    sess.role = user.role;
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        team_id: user.team_id,
+        team_name: user.team_name,
+        role: user.role,
+      },
+    });
+  });
+
+  app.post("/api/auth/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) return res.status(500).json({ error: "Logout failed" });
+      res.json({ success: true });
+    });
+  });
+
+  app.get("/api/auth/me", (req, res) => {
+    const sess = req.session as SessionWithUser;
+    if (sess?.userId == null) return res.status(401).json({ error: "Not authenticated" });
+    const row = db.prepare(`
+      SELECT u.id, u.email, u.name, u.team_id, u.role, t.name as team_name
+      FROM users u
+      JOIN teams t ON t.id = u.team_id
+      WHERE u.id = ?
+    `).get(sess.userId) as { id: number; email: string; name: string; team_id: number; team_name: string; role: "admin" | "member" } | undefined;
+    if (!row) return res.status(401).json({ error: "User not found" });
+    res.json({
+      user: {
+        id: row.id,
+        email: row.email,
+        name: row.name,
+        team_id: row.team_id,
+        team_name: row.team_name,
+        role: row.role,
+      },
+    });
+  });
 
   app.get("/api/posts", (req, res) => {
-    const { category, tag, author } = req.query;
+    const { category, tag, author, q } = req.query;
     let query = postsBaseQuery;
     const params: string[] = [];
     if (category && typeof category === "string") {
@@ -115,8 +328,13 @@ export function createApp(options: { baseUrl?: string }) {
       params.push(category);
     }
     if (author && typeof author === "string") {
-      query += ` AND a.username = ?`;
+      query += ` AND u.username = ?`;
       params.push(author);
+    }
+    if (q && typeof q === "string" && q.trim()) {
+      const term = `%${q.trim()}%`;
+      query += ` AND (p.title LIKE ? OR p.excerpt LIKE ?)`;
+      params.push(term, term);
     }
     query += ` ORDER BY p.published_at DESC`;
     let posts = params.length ? db.prepare(query).all(...params) : db.prepare(query).all();
@@ -133,9 +351,9 @@ export function createApp(options: { baseUrl?: string }) {
 
   app.get("/api/posts/:slug", (req, res) => {
     const post = db.prepare(`
-      SELECT p.*, a.name as author_name, a.username as author_username, a.bio as author_bio, a.avatar_url as author_avatar, c.name as category_name, c.slug as category_slug
+      SELECT p.*, u.name as author_name, u.username as author_username, u.bio as author_bio, u.avatar_url as author_avatar, c.name as category_name, c.slug as category_slug
       FROM posts p
-      JOIN authors a ON p.author_id = a.id
+      JOIN users u ON p.user_id = u.id
       JOIN categories c ON p.category_id = c.id
       WHERE p.slug = ?
     `).get(req.params.slug);
@@ -182,29 +400,29 @@ export function createApp(options: { baseUrl?: string }) {
     res.json({ success: true });
   });
 
-  app.get("/api/admin/posts", (req, res) => {
+  app.get("/api/admin/posts", requireAuth, (req, res) => {
     res.json(db.prepare(`
-      SELECT p.*, a.name as author_name, c.name as category_name
+      SELECT p.*, u.name as author_name, u.username as author_username, c.name as category_name
       FROM posts p
-      JOIN authors a ON p.author_id = a.id
+      LEFT JOIN users u ON p.user_id = u.id
       JOIN categories c ON p.category_id = c.id
       ORDER BY p.published_at DESC
     `).all());
   });
-  app.post("/api/admin/posts", (req, res) => {
+  app.post("/api/admin/posts", requireAuth, (req, res) => {
     const { title, slug, content, excerpt, featured_image, category_id, is_published, reading_time } = req.body;
-    const author_id = 1;
+    const user = (req as express.Request & { user: SessionUser }).user;
     try {
       const result = db.prepare(`
-        INSERT INTO posts (title, slug, content, excerpt, featured_image, author_id, category_id, is_published, reading_time)
+        INSERT INTO posts (title, slug, content, excerpt, featured_image, user_id, category_id, is_published, reading_time)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(title, slug, content, excerpt, featured_image, author_id, category_id, is_published ? 1 : 0, reading_time);
+      `).run(title, slug, content, excerpt, featured_image, user.id, category_id, is_published ? 1 : 0, reading_time);
       res.json({ id: result.lastInsertRowid });
     } catch {
       res.status(400).json({ error: "Slug must be unique" });
     }
   });
-  app.put("/api/admin/posts/:id", (req, res) => {
+  app.put("/api/admin/posts/:id", requireAuth, (req, res) => {
     const { title, slug, content, excerpt, featured_image, category_id, is_published, reading_time } = req.body;
     try {
       db.prepare(`
@@ -217,8 +435,102 @@ export function createApp(options: { baseUrl?: string }) {
       res.status(400).json({ error: "Update failed" });
     }
   });
-  app.delete("/api/admin/posts/:id", (req, res) => {
+  app.delete("/api/admin/posts/:id", requireAuth, (req, res) => {
     db.prepare("DELETE FROM posts WHERE id = ?").run(req.params.id);
+    res.json({ success: true });
+  });
+
+  app.post("/api/admin/upload", requireAuth, upload.single("file"), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    res.json({ url: "/uploads/" + path.basename(req.file.path) });
+  });
+
+  app.get("/api/admin/teams", requireAuth, requireRole("admin"), (req, res) => {
+    res.json(db.prepare("SELECT * FROM teams ORDER BY name").all());
+  });
+  app.post("/api/admin/teams", requireAuth, requireRole("admin"), (req, res) => {
+    const { name, slug } = req.body;
+    if (!name || !slug) return res.status(400).json({ error: "Name and slug required" });
+    try {
+      const result = db.prepare("INSERT INTO teams (name, slug) VALUES (?, ?)").run(name, slug);
+      res.json({ id: result.lastInsertRowid, name, slug });
+    } catch {
+      res.status(400).json({ error: "Team slug must be unique or invalid data" });
+    }
+  });
+  app.put("/api/admin/teams/:id", requireAuth, requireRole("admin"), (req, res) => {
+    const { name, slug } = req.body;
+    if (!name || !slug) return res.status(400).json({ error: "Name and slug required" });
+    try {
+      db.prepare("UPDATE teams SET name = ?, slug = ? WHERE id = ?").run(name, slug, req.params.id);
+      res.json({ success: true });
+    } catch {
+      res.status(400).json({ error: "Update failed" });
+    }
+  });
+  app.delete("/api/admin/teams/:id", requireAuth, requireRole("admin"), (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const userCount = db.prepare("SELECT COUNT(*) as count FROM users WHERE team_id = ?").get(id) as { count: number };
+    if (userCount.count > 0) return res.status(400).json({ error: "Cannot delete team with members. Move or remove users first." });
+    db.prepare("DELETE FROM teams WHERE id = ?").run(id);
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/users", requireAuth, requireRole("admin"), (req, res) => {
+    const rows = db.prepare(`
+      SELECT u.id, u.email, u.name, u.team_id, u.role, u.created_at, t.name as team_name
+      FROM users u
+      JOIN teams t ON t.id = u.team_id
+      ORDER BY u.email
+    `).all();
+    res.json(rows);
+  });
+  app.post("/api/admin/users", requireAuth, requireRole("admin"), (req, res) => {
+    const { email, password, name, team_id, role } = req.body;
+    if (!email || !password || !team_id || !role) return res.status(400).json({ error: "Email, password, team_id, and role required" });
+    if (role !== "admin" && role !== "member") return res.status(400).json({ error: "Role must be admin or member" });
+    const password_hash = bcrypt.hashSync(password, 10);
+    let username = email.replace(/@.*/, "").replace(/[^a-z0-9]/gi, "") || "user";
+    if (db.prepare("SELECT 1 FROM users WHERE username = ?").get(username)) {
+      username = username + "_" + Date.now();
+    }
+    try {
+      const result = db.prepare(`
+        INSERT INTO users (email, password_hash, name, team_id, role, username)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(email, password_hash, name || null, team_id, role, username);
+      res.json({ id: result.lastInsertRowid });
+    } catch {
+      res.status(400).json({ error: "Email already exists or invalid data" });
+    }
+  });
+  app.put("/api/admin/users/:id", requireAuth, requireRole("admin"), (req, res) => {
+    const { name, team_id, role, password } = req.body;
+    const id = parseInt(req.params.id, 10);
+    if (role !== undefined && role !== "admin" && role !== "member") return res.status(400).json({ error: "Role must be admin or member" });
+    const existing = db.prepare("SELECT name, team_id, role FROM users WHERE id = ?").get(id) as { name: string; team_id: number; role: string } | undefined;
+    if (!existing) return res.status(404).json({ error: "User not found" });
+    const newName = name !== undefined ? name : existing.name;
+    const newTeamId = team_id !== undefined ? team_id : existing.team_id;
+    const newRole = role !== undefined ? role : existing.role;
+    try {
+      if (password) {
+        const password_hash = bcrypt.hashSync(password, 10);
+        db.prepare("UPDATE users SET name = ?, team_id = ?, role = ?, password_hash = ? WHERE id = ?").run(newName, newTeamId, newRole, password_hash, id);
+      } else {
+        db.prepare("UPDATE users SET name = ?, team_id = ?, role = ? WHERE id = ?").run(newName, newTeamId, newRole, id);
+      }
+      res.json({ success: true });
+    } catch {
+      res.status(400).json({ error: "Update failed" });
+    }
+  });
+  app.delete("/api/admin/users/:id", requireAuth, requireRole("admin"), (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const adminCount = db.prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin'").get() as { count: number };
+    const target = db.prepare("SELECT role FROM users WHERE id = ?").get(id) as { role: string } | undefined;
+    if (adminCount.count <= 1 && target?.role === "admin") return res.status(400).json({ error: "Cannot delete the last admin" });
+    db.prepare("DELETE FROM users WHERE id = ?").run(id);
     res.json({ success: true });
   });
 
@@ -226,9 +538,9 @@ export function createApp(options: { baseUrl?: string }) {
     const post = db.prepare("SELECT id, category_id FROM posts WHERE slug = ? AND is_published = 1").get(req.params.slug) as { id: number; category_id: number } | undefined;
     if (!post) return res.status(404).json({ error: "Post not found" });
     const related = db.prepare(`
-      SELECT p.*, a.name as author_name, a.avatar_url as author_avatar, c.name as category_name
+      SELECT p.*, u.name as author_name, u.avatar_url as author_avatar, c.name as category_name
       FROM posts p
-      JOIN authors a ON p.author_id = a.id
+      JOIN users u ON p.user_id = u.id
       JOIN categories c ON p.category_id = c.id
       WHERE p.is_published = 1 AND p.category_id = ? AND p.id != ?
       ORDER BY p.published_at DESC
@@ -254,17 +566,17 @@ export function createApp(options: { baseUrl?: string }) {
     res.json({ ...tag, postCount: count.count });
   });
   app.get("/api/authors/:username", (req, res) => {
-    const author = db.prepare("SELECT * FROM authors WHERE username = ?").get(req.params.username) as { id: number; username: string; name: string; bio: string; avatar_url: string } | undefined;
-    if (!author) return res.status(404).json({ error: "Author not found" });
+    const user = db.prepare("SELECT id, username, name, bio, avatar_url FROM users WHERE username = ?").get(req.params.username) as { id: number; username: string; name: string; bio: string; avatar_url: string } | undefined;
+    if (!user) return res.status(404).json({ error: "Author not found" });
     const posts = db.prepare(`
-      SELECT p.*, a.name as author_name, a.avatar_url as author_avatar, c.name as category_name
+      SELECT p.*, u.name as author_name, u.avatar_url as author_avatar, c.name as category_name
       FROM posts p
-      JOIN authors a ON p.author_id = a.id
+      JOIN users u ON p.user_id = u.id
       JOIN categories c ON p.category_id = c.id
-      WHERE p.author_id = ? AND p.is_published = 1
+      WHERE p.user_id = ? AND p.is_published = 1
       ORDER BY p.published_at DESC
-    `).all(author.id);
-    res.json({ ...author, posts });
+    `).all(user.id);
+    res.json({ ...user, posts });
   });
 
   function sendSitemap(_req: express.Request, res: express.Response) {

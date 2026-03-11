@@ -9,18 +9,31 @@ import { TagPage } from "./pages/TagPage";
 import { AuthorPage } from "./pages/AuthorPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ContactPage } from "./pages/ContactPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminLayout } from "./components/AdminLayout";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { AdminPostList } from "./pages/admin/AdminPostList";
 import { AdminPostEditor } from "./pages/admin/AdminPostEditor";
 import { AdminCategoryManager } from "./pages/admin/AdminCategoryManager";
 import { AdminTagManager } from "./pages/admin/AdminTagManager";
+import { AdminTeamManager } from "./pages/admin/AdminTeamManager";
+import { AdminUserManager } from "./pages/admin/AdminUserManager";
+import { AdminProfilePage } from "./pages/admin/AdminProfilePage";
 import { AdminLoginPage } from "./pages/admin/AdminLoginPage";
 import { ThemeProvider } from "./hooks/useTheme";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
-  return isAdmin ? <>{children}</> : <Navigate to="/admin/login" />;
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-zinc-500">Loading…</div>;
+  return user ? <>{children}</> : <Navigate to="/admin/login" />;
+}
+
+function RequireAdmin({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-zinc-500">Loading…</div>;
+  if (!user || user.role !== "admin") return <Navigate to="/admin" />;
+  return <>{children}</>;
 }
 
 const PublicWrap = ({ children }: { children: React.ReactNode }) => (
@@ -31,6 +44,7 @@ export default function App() {
   return (
     <HelmetProvider>
       <ThemeProvider>
+        <AuthProvider>
         <Router>
           <Routes>
             {/* Public Routes */}
@@ -42,6 +56,9 @@ export default function App() {
             <Route path="/author/:username" element={<PublicWrap><AuthorPage /></PublicWrap>} />
             <Route path="/about" element={<PublicWrap><AboutPage /></PublicWrap>} />
             <Route path="/contact" element={<PublicWrap><ContactPage /></PublicWrap>} />
+
+            {/* 404 - unknown routes */}
+            <Route path="*" element={<PublicWrap><NotFoundPage /></PublicWrap>} />
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -56,9 +73,13 @@ export default function App() {
             <Route path="posts/edit/:id" element={<AdminPostEditor />} />
             <Route path="categories" element={<AdminCategoryManager />} />
             <Route path="tags" element={<AdminTagManager />} />
+            <Route path="teams" element={<RequireAdmin><AdminTeamManager /></RequireAdmin>} />
+            <Route path="users" element={<RequireAdmin><AdminUserManager /></RequireAdmin>} />
+            <Route path="profile" element={<AdminProfilePage />} />
           </Route>
         </Routes>
       </Router>
+        </AuthProvider>
       </ThemeProvider>
     </HelmetProvider>
   );

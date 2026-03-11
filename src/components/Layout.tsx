@@ -3,10 +3,17 @@ import { Menu, X, Search, Github, Twitter, Sun, Moon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "../lib/utils";
 import { useTheme } from "../hooks/useTheme";
+import { SearchModal } from "./SearchModal";
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+
+  const openSearch = () => {
+    setIsSearchOpen(true);
+    setIsMenuOpen(false);
+  };
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -57,15 +64,14 @@ export function Navbar() {
             >
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button className="p-2 text-zinc-500 hover:text-emerald-600 transition-colors" aria-label="Search">
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className="p-2 text-zinc-500 hover:text-emerald-600 transition-colors rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              aria-label="Search posts"
+            >
               <Search size={20} />
             </button>
-            <Link
-              to="/admin"
-              className="rounded-full bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
-            >
-              Admin
-            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -101,16 +107,18 @@ export function Navbar() {
             >
               {theme === "dark" ? "Light mode" : "Dark mode"}
             </button>
-            <Link
-              to="/admin"
-              onClick={() => setIsMenuOpen(false)}
-              className="block rounded-md px-3 py-2 text-base font-medium text-emerald-600"
+            <button
+              type="button"
+              onClick={openSearch}
+              className="flex items-center gap-2 w-full rounded-md px-3 py-2 text-base font-medium text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-emerald-600"
             >
-              Admin Dashboard
-            </Link>
+              <Search size={20} />
+              Search
+            </button>
           </div>
         </div>
       )}
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </nav>
   );
 }

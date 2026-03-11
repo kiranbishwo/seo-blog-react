@@ -29,7 +29,11 @@ export function BlogDetailPage() {
   useEffect(() => {
     if (!slug) return;
     Promise.all([
-      fetch(`/api/posts/${slug}`).then((r) => r.json()),
+      fetch(`/api/posts/${slug}`).then(async (r) => {
+        const data = await r.json();
+        if (!r.ok || data?.error || !data?.slug) return null;
+        return data;
+      }),
       fetch(`/api/posts/${slug}/related`).then((r) => r.json()),
     ])
       .then(([data, relatedList]) => {
@@ -57,7 +61,36 @@ export function BlogDetailPage() {
     );
   }
 
-  if (!post) return <div className="py-24 text-center text-zinc-500 dark:text-zinc-400">Post not found</div>;
+  if (!post) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-24">
+        <SEO title="Article not found" description="This article doesn't exist or has been removed." />
+        <div className="text-center max-w-md">
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
+            Article not found
+          </h1>
+          <p className="text-zinc-600 dark:text-zinc-400 mb-8">
+            This article doesn't exist or may have been removed.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/blog"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-500 transition-colors"
+            >
+              <ArrowLeft size={20} />
+              Back to blog
+            </Link>
+            <Link
+              to="/"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-300 dark:border-zinc-600 px-6 py-3 font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+            >
+              Go to home
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const categorySlug = post.category_slug ?? post.category_name?.toLowerCase().replace(/\s+/g, "-") ?? "";
 
@@ -146,12 +179,18 @@ export function BlogDetailPage() {
             </p>
             <div className="flex flex-wrap items-center justify-between gap-6 border-y border-zinc-100 dark:border-zinc-800 py-8">
               <div className="flex items-center space-x-4">
-                <img
-                  src={post.author_avatar}
-                  alt={post.author_name ?? ""}
-                  className="h-12 w-12 rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
+                {post.author_avatar ? (
+                  <img
+                    src={post.author_avatar}
+                    alt={post.author_name ?? ""}
+                    className="h-12 w-12 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-lg font-bold text-zinc-600 dark:text-zinc-300 shrink-0">
+                    {(post.author_name ?? post.author_username ?? "?").slice(0, 1).toUpperCase()}
+                  </span>
+                )}
                 <div>
                   <Link
                     to={`/author/${post.author_username ?? ""}`}

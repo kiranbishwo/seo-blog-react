@@ -9,14 +9,21 @@ interface AuthorBoxProps {
 }
 
 export function AuthorBox({ name, username, bio, avatarUrl }: AuthorBoxProps) {
+  const initial = (name || username || "?").slice(0, 1).toUpperCase();
   return (
     <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-3xl p-8 sm:p-12 flex flex-col sm:flex-row items-center sm:items-start gap-8">
-      <img
-        src={avatarUrl}
-        alt={name}
-        className="h-24 w-24 rounded-full object-cover shadow-lg"
-        referrerPolicy="no-referrer"
-      />
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={name}
+          className="h-24 w-24 rounded-full object-cover shadow-lg"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <span className="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-3xl font-bold text-zinc-600 dark:text-zinc-300 shadow-lg shrink-0">
+          {initial}
+        </span>
+      )}
       <div className="text-center sm:text-left">
         <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">
           Written by {name}

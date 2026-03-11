@@ -70,12 +70,18 @@ export function AuthorPage() {
         image={author.avatar_url}
       />
       <header className="mb-16 flex flex-col sm:flex-row gap-8 items-center sm:items-start">
-        <img
-          src={author.avatar_url}
-          alt={author.name}
-          className="h-24 w-24 rounded-full object-cover shadow-lg"
-          referrerPolicy="no-referrer"
-        />
+        {author.avatar_url ? (
+          <img
+            src={author.avatar_url}
+            alt={author.name}
+            className="h-24 w-24 rounded-full object-cover shadow-lg"
+            referrerPolicy="no-referrer"
+          />
+        ) : (
+          <span className="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-700 text-3xl font-bold text-zinc-600 dark:text-zinc-300 shadow-lg shrink-0">
+            {(author.name || author.username || "?").slice(0, 1).toUpperCase()}
+          </span>
+        )}
         <div className="text-center sm:text-left">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">
             {author.name}

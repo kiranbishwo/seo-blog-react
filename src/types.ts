@@ -25,7 +25,7 @@ export interface Post {
   content: string;
   excerpt: string;
   featured_image: string;
-  author_id: number;
+  user_id?: number;
   category_id: number;
   published_at: string;
   is_published: boolean;

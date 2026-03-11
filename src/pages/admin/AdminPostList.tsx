@@ -9,7 +9,7 @@ export function AdminPostList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/admin/posts")
+    fetch("/api/admin/posts", { credentials: "include" })
       .then(res => res.json())
       .then(data => {
         setPosts(data);
@@ -20,7 +20,7 @@ export function AdminPostList() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this post?")) return;
     
-    await fetch(`/api/admin/posts/${id}`, { method: "DELETE" });
+    await fetch(`/api/admin/posts/${id}`, { method: "DELETE", credentials: "include" });
     setPosts(posts.filter(p => p.id !== id));
   };
 
@@ -45,6 +45,7 @@ export function AdminPostList() {
           <thead className="bg-zinc-50 border-b border-zinc-200">
             <tr>
               <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Title</th>
+              <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Author</th>
               <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Category</th>
               <th className="px-6 py-4 text-xs font-bold text-zinc-500 uppercase tracking-wider">Date</th>
@@ -54,11 +55,11 @@ export function AdminPostList() {
           <tbody className="divide-y divide-zinc-100">
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">Loading posts...</td>
+                <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">Loading posts...</td>
               </tr>
             ) : posts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-zinc-500">No posts found. Create your first post!</td>
+                <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">No posts found. Create your first post!</td>
               </tr>
             ) : (
               posts.map((post) => (
@@ -67,6 +68,7 @@ export function AdminPostList() {
                     <div className="font-medium text-zinc-900">{post.title}</div>
                     <div className="text-xs text-zinc-500">/{post.slug}</div>
                   </td>
+                  <td className="px-6 py-4 text-sm text-zinc-600">{post.author_name ?? post.author_username ?? "—"}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       post.is_published 

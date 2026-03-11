@@ -2,21 +2,30 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, ArrowRight } from "lucide-react";
 import { SEO } from "../../components/SEO";
+import { useAuth } from "../../contexts/AuthContext";
 
 export function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { user, loading, login } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-zinc-50 text-zinc-500">Loading…</div>;
+  if (user) {
+    navigate("/admin", { replace: true });
+    return null;
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simple simulation
-    if (email === "admin@lumina.com" && password === "admin123") {
-      localStorage.setItem("isAdmin", "true");
-      navigate("/admin");
-    } else {
-      alert("Invalid credentials. Try admin@lumina.com / admin123");
-    }
+    setError("");
+    setSubmitting(true);
+    const result = await login(email, password);
+    setSubmitting(false);
+    if (result.ok) navigate("/admin");
+    else setError(result.error || "Invalid credentials");
   };
 
   return (
@@ -33,6 +42,11 @@ export function AdminLoginPage() {
         </div>
 
         <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl border border-zinc-200 shadow-xl space-y-6">
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm">
+              {error}
+            </div>
+          )}
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Email Address</label>
@@ -66,17 +80,12 @@ export function AdminLoginPage() {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center space-x-2 bg-zinc-900 text-white py-3 rounded-xl font-semibold hover:bg-zinc-800 transition-all group"
+            disabled={submitting}
+            className="w-full flex items-center justify-center space-x-2 bg-zinc-900 text-white py-3 rounded-xl font-semibold hover:bg-zinc-800 transition-all group disabled:opacity-50"
           >
-            <span>Sign in to Dashboard</span>
+            <span>{submitting ? "Signing in…" : "Sign in to Dashboard"}</span>
             <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
           </button>
-
-          <div className="text-center">
-            <p className="text-xs text-zinc-400">
-              Demo credentials: admin@lumina.com / admin123
-            </p>
-          </div>
         </form>
       </div>
     </div>
