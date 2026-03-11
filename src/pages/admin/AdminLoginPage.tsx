@@ -34,7 +34,7 @@ export function AdminLoginPage() {
       
       <div className="max-w-md w-full">
         <div className="text-center mb-10">
-          <div className="h-12 w-12 rounded-xl bg-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-600/20">
+          <div className="h-12 w-12 rounded-xl bg-[var(--site-primary)] flex items-center justify-center mx-auto mb-4 shadow-lg" style={{ boxShadow: "var(--site-shadow)" }}>
             <span className="text-white font-bold text-2xl">L</span>
           </div>
           <h1 className="text-3xl font-bold text-zinc-900">Welcome back</h1>
@@ -56,7 +56,7 @@ export function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-200 focus-ring-primary transition-all"
                   placeholder="admin@lumina.com"
                   required
                 />
@@ -70,7 +70,7 @@ export function AdminLoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-200 focus-ring-primary transition-all"
                   placeholder="••••••••"
                   required
                 />

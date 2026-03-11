@@ -33,7 +33,7 @@ export function AuthorBox({ name, username, bio, avatarUrl }: AuthorBoxProps) {
         </p>
         <Link
           to={`/author/${username}`}
-          className="inline-flex items-center space-x-2 text-emerald-600 font-semibold hover:text-emerald-500 transition-colors"
+          className="link-primary inline-flex items-center space-x-2 font-semibold"
         >
           <span>View all posts</span>
           <ArrowRight size={18} />

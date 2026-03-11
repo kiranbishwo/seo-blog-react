@@ -10,6 +10,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import multer from "multer";
+import nodemailer from "nodemailer";
 
 const require = createRequire(import.meta.url);
 const session = require("express-session");
@@ -135,6 +136,87 @@ for (const u of usersWithoutUsername) {
 db.prepare("PRAGMA foreign_keys = OFF").run();
 db.prepare("DROP TABLE IF EXISTS authors").run();
 db.prepare("PRAGMA foreign_keys = ON").run();
+
+// Advanced settings tables
+db.exec(`
+  CREATE TABLE IF NOT EXISTS site_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    project_name TEXT DEFAULT 'Lumina',
+    primary_color TEXT DEFAULT '#059669',
+    secondary_color TEXT DEFAULT '#10b981',
+    footer_copyright TEXT DEFAULT '',
+    google_analytics_script TEXT DEFAULT '',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS social_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    platform TEXT NOT NULL,
+    url TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS legal_pages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS smtp_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    host TEXT DEFAULT '',
+    port INTEGER DEFAULT 587,
+    secure INTEGER DEFAULT 0,
+    user TEXT DEFAULT '',
+    password TEXT DEFAULT '',
+    from_email TEXT DEFAULT '',
+    from_name TEXT DEFAULT '',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
+// Seed single-row tables for settings if empty
+const siteSettingsCount = db.prepare("SELECT COUNT(*) as count FROM site_settings").get() as { count: number };
+if (siteSettingsCount.count === 0) {
+  db.prepare(`
+    INSERT INTO site_settings (id, project_name, primary_color, secondary_color, footer_copyright, google_analytics_script)
+    VALUES (1, 'Lumina', '#059669', '#10b981', '', '')
+  `).run();
+}
+const smtpSettingsCount = db.prepare("SELECT COUNT(*) as count FROM smtp_settings").get() as { count: number };
+if (smtpSettingsCount.count === 0) {
+  db.prepare(`
+    INSERT INTO smtp_settings (id, host, port, secure, user, password, from_email, from_name)
+    VALUES (1, '', 587, 0, '', '', '', '')
+  `).run();
+}
+const legalSlugs = ["terms", "privacy", "cookies"];
+for (const slug of legalSlugs) {
+  const existing = db.prepare("SELECT 1 FROM legal_pages WHERE slug = ?").get(slug);
+  if (!existing) {
+    const title = slug === "terms" ? "Terms of Service" : slug === "privacy" ? "Privacy Policy" : "Cookie Policy";
+    db.prepare("INSERT INTO legal_pages (slug, title, content) VALUES (?, ?, '')").run(slug, title);
+  }
+}
+
+// Migration: add contact info columns to site_settings
+for (const col of ["contact_email", "contact_phone", "contact_address", "contact_success_message"]) {
+  const cols = db.prepare("PRAGMA table_info(site_settings)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === col)) {
+    db.prepare(`ALTER TABLE site_settings ADD COLUMN ${col} TEXT DEFAULT ''`).run();
+  }
+}
+
+// Contact form submissions
+db.exec(`
+  CREATE TABLE IF NOT EXISTS contact_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    message TEXT NOT NULL,
+    read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+`);
 
 // Fresh DB seed: one admin user + minimal data (one team, one category, one tag, one sample post)
 const teamCount = db.prepare("SELECT COUNT(*) as count FROM teams").get() as { count: number };
@@ -532,6 +614,220 @@ export function createApp(options: { baseUrl?: string }) {
     if (adminCount.count <= 1 && target?.role === "admin") return res.status(400).json({ error: "Cannot delete the last admin" });
     db.prepare("DELETE FROM users WHERE id = ?").run(id);
     res.json({ success: true });
+  });
+
+  // Public site settings (no auth)
+  app.get("/api/site-settings", (req, res) => {
+    const site = db.prepare("SELECT project_name, primary_color, secondary_color, footer_copyright, google_analytics_script, contact_email, contact_phone, contact_address, contact_success_message FROM site_settings WHERE id = 1").get() as {
+      project_name: string;
+      primary_color: string;
+      secondary_color: string;
+      footer_copyright: string;
+      google_analytics_script: string;
+      contact_email: string | null;
+      contact_phone: string | null;
+      contact_address: string | null;
+      contact_success_message: string | null;
+    } | undefined;
+    const social = db.prepare("SELECT platform, url FROM social_links ORDER BY sort_order, id").all() as { platform: string; url: string }[];
+    const legal = db.prepare("SELECT slug, title FROM legal_pages ORDER BY slug").all() as { slug: string; title: string }[];
+    res.json({
+      projectName: site?.project_name ?? "Lumina",
+      primaryColor: site?.primary_color ?? "#059669",
+      secondaryColor: site?.secondary_color ?? "#10b981",
+      footerCopyright: site?.footer_copyright ?? "",
+      googleAnalyticsScript: site?.google_analytics_script ?? "",
+      contactEmail: site?.contact_email ?? "",
+      contactPhone: site?.contact_phone ?? "",
+      contactAddress: site?.contact_address ?? "",
+      contactSuccessMessage: site?.contact_success_message ?? "Thanks for reaching out. We'll get back to you soon.",
+      socialLinks: social.map((r) => ({ platform: r.platform, url: r.url })),
+      legalPages: legal.map((r) => ({ slug: r.slug, title: r.title, path: `/legal/${r.slug}` })),
+    });
+  });
+
+  // Public contact form submit
+  app.post("/api/contact", (req, res) => {
+    const { name, email, message } = req.body || {};
+    const n = typeof name === "string" ? name.trim() : "";
+    const e = typeof email === "string" ? email.trim() : "";
+    const m = typeof message === "string" ? message.trim() : "";
+    if (!n || !e || !m) return res.status(400).json({ error: "Name, email, and message are required." });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(e)) return res.status(400).json({ error: "Invalid email address." });
+    db.prepare("INSERT INTO contact_requests (name, email, message) VALUES (?, ?, ?)").run(n, e, m);
+    res.json({ success: true });
+  });
+
+  app.get("/api/legal/:slug", (req, res) => {
+    const page = db.prepare("SELECT slug, title, content FROM legal_pages WHERE slug = ?").get(req.params.slug) as { slug: string; title: string; content: string } | undefined;
+    if (!page) return res.status(404).json({ error: "Not found" });
+    res.json({ slug: page.slug, title: page.title, content: page.content });
+  });
+
+  // Admin settings (require admin)
+  app.get("/api/admin/settings", requireAuth, requireRole("admin"), (req, res) => {
+    const site = db.prepare("SELECT * FROM site_settings WHERE id = 1").get() as Record<string, unknown> | undefined;
+    const social = db.prepare("SELECT * FROM social_links ORDER BY sort_order, id").all();
+    const legal = db.prepare("SELECT * FROM legal_pages ORDER BY slug").all();
+    const smtp = db.prepare("SELECT id, host, port, secure, user, from_email, from_name, updated_at FROM smtp_settings WHERE id = 1").get() as Record<string, unknown> | undefined;
+    const smtpWithMask = smtp ? { ...smtp, password: smtp.password ? "********" : "" } : null;
+    res.json({
+      site: site ?? null,
+      social,
+      legal,
+      smtp: smtpWithMask,
+    });
+  });
+
+  app.put("/api/admin/settings/site", requireAuth, requireRole("admin"), (req, res) => {
+    const { projectName, primaryColor, secondaryColor, footerCopyright, googleAnalyticsScript, contactEmail, contactPhone, contactAddress, contactSuccessMessage } = req.body || {};
+    db.prepare(`
+      UPDATE site_settings SET
+        project_name = COALESCE(?, project_name),
+        primary_color = COALESCE(?, primary_color),
+        secondary_color = COALESCE(?, secondary_color),
+        footer_copyright = COALESCE(?, footer_copyright),
+        google_analytics_script = COALESCE(?, google_analytics_script),
+        contact_email = COALESCE(?, contact_email),
+        contact_phone = COALESCE(?, contact_phone),
+        contact_address = COALESCE(?, contact_address),
+        contact_success_message = COALESCE(?, contact_success_message),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = 1
+    `).run(
+      projectName ?? null,
+      primaryColor ?? null,
+      secondaryColor ?? null,
+      footerCopyright ?? null,
+      googleAnalyticsScript ?? null,
+      contactEmail ?? null,
+      contactPhone ?? null,
+      contactAddress ?? null,
+      contactSuccessMessage ?? null
+    );
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/contact-requests", requireAuth, requireRole("admin"), (req, res) => {
+    const rows = db.prepare("SELECT id, name, email, message, read, created_at FROM contact_requests ORDER BY created_at DESC").all() as {
+      id: number;
+      name: string;
+      email: string;
+      message: string;
+      read: number;
+      created_at: string;
+    }[];
+    res.json(rows.map((r) => ({ id: r.id, name: r.name, email: r.email, message: r.message, read: r.read === 1, createdAt: r.created_at })));
+  });
+
+  app.get("/api/admin/settings/social", requireAuth, requireRole("admin"), (req, res) => {
+    res.json(db.prepare("SELECT * FROM social_links ORDER BY sort_order, id").all());
+  });
+
+  app.put("/api/admin/settings/social", requireAuth, requireRole("admin"), (req, res) => {
+    const { links } = req.body || {};
+    if (!Array.isArray(links)) return res.status(400).json({ error: "links array required" });
+    db.prepare("DELETE FROM social_links").run();
+    const insert = db.prepare("INSERT INTO social_links (platform, url, sort_order) VALUES (?, ?, ?)");
+    links.forEach((item: { platform?: string; url?: string; sortOrder?: number }, i: number) => {
+      const platform = (item.platform || "").trim();
+      const url = (item.url || "").trim();
+      if (platform && url) insert.run(platform, url, item.sortOrder ?? i);
+    });
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/settings/legal", requireAuth, requireRole("admin"), (req, res) => {
+    res.json(db.prepare("SELECT * FROM legal_pages ORDER BY slug").all());
+  });
+
+  app.put("/api/admin/settings/legal", requireAuth, requireRole("admin"), (req, res) => {
+    const { pages } = req.body || {};
+    if (!Array.isArray(pages)) return res.status(400).json({ error: "pages array required" });
+    for (const p of pages) {
+      const slug = (p.slug || "").trim();
+      const title = (p.title || "").trim();
+      const content = p.content ?? "";
+      if (!slug) continue;
+      const existing = db.prepare("SELECT id FROM legal_pages WHERE slug = ?").get(slug);
+      if (existing) {
+        db.prepare("UPDATE legal_pages SET title = ?, content = ?, updated_at = CURRENT_TIMESTAMP WHERE slug = ?").run(title, content, slug);
+      } else {
+        db.prepare("INSERT INTO legal_pages (slug, title, content) VALUES (?, ?, ?)").run(slug, title, content);
+      }
+    }
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/settings/smtp", requireAuth, requireRole("admin"), (req, res) => {
+    const row = db.prepare("SELECT id, host, port, secure, user, from_email, from_name, updated_at FROM smtp_settings WHERE id = 1").get();
+    res.json(row ? { ...row, password: "********" } : null);
+  });
+
+  app.put("/api/admin/settings/smtp", requireAuth, requireRole("admin"), (req, res) => {
+    const { host, port, secure, user, password, from_email, from_name } = req.body || {};
+    const existing = db.prepare("SELECT id FROM smtp_settings WHERE id = 1").get();
+    if (existing) {
+      if (password === "********" || password === undefined || password === null) {
+        db.prepare(`
+          UPDATE smtp_settings SET host = ?, port = ?, secure = ?, user = ?, from_email = ?, from_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1
+        `).run(host ?? "", port ?? 587, secure ? 1 : 0, user ?? "", from_email ?? "", from_name ?? "");
+      } else {
+        db.prepare(`
+          UPDATE smtp_settings SET host = ?, port = ?, secure = ?, user = ?, password = ?, from_email = ?, from_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = 1
+        `).run(host ?? "", port ?? 587, secure ? 1 : 0, user ?? "", password ?? "", from_email ?? "", from_name ?? "");
+      }
+    } else {
+      db.prepare(`
+        INSERT INTO smtp_settings (id, host, port, secure, user, password, from_email, from_name) VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+      `).run(host ?? "", port ?? 587, secure ? 1 : 0, user ?? "", password ?? "", from_email ?? "", from_name ?? "");
+    }
+    res.json({ success: true });
+  });
+
+  app.post("/api/admin/settings/smtp/test", requireAuth, requireRole("admin"), async (req, res) => {
+    const user = (req as express.Request & { user: SessionUser }).user;
+    const { to } = req.body || {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const toAddress = typeof to === "string" && to.trim() ? to.trim() : "";
+    const sendTo = toAddress && emailRegex.test(toAddress) ? toAddress : user.email;
+    const smtp = db.prepare("SELECT * FROM smtp_settings WHERE id = 1").get() as {
+      host: string;
+      port: number;
+      secure: number;
+      user: string;
+      password: string;
+      from_email: string;
+      from_name: string;
+    } | undefined;
+    if (!smtp || !smtp.host || !smtp.user) {
+      return res.status(400).json({ error: "SMTP not configured. Set host and user first." });
+    }
+    try {
+      const port = Number(smtp.port) || 587;
+      // Port 465 = implicit SSL; 587/25 = plain then STARTTLS. Using secure:true on 587 causes "wrong version number".
+      const useSecure = port === 465 || (smtp.secure === 1 && port === 465);
+      const transporter = nodemailer.createTransport({
+        host: smtp.host,
+        port,
+        secure: useSecure,
+        auth: { user: smtp.user, pass: smtp.password || "" },
+      });
+      await transporter.sendMail({
+        from: smtp.from_email ? `"${(smtp.from_name || "").replace(/"/g, "")}" <${smtp.from_email}>` : smtp.user,
+        to: sendTo,
+        subject: "Test email from your blog",
+        text: "This is a test email. SMTP is working.",
+      });
+      res.json({ success: true, message: "Test email sent to " + sendTo });
+    } catch (err: unknown) {
+      let message = err instanceof Error ? err.message : "Failed to send test email";
+      if (message.includes("535") || message.toLowerCase().includes("authentication failed")) {
+        message += " Check username and password. For Gmail, use an App Password (Google Account → Security → 2-Step Verification → App passwords), not your normal password.";
+      }
+      res.status(500).json({ error: message });
+    }
   });
 
   app.get("/api/posts/:slug/related", (req, res) => {

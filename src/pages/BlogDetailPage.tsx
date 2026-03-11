@@ -75,7 +75,7 @@ export function BlogDetailPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               to="/blog"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-500 transition-colors"
+              className="btn-primary inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold"
             >
               <ArrowLeft size={20} />
               Back to blog
@@ -133,7 +133,7 @@ export function BlogDetailPage() {
         );
       }
       return (
-        <code className="bg-zinc-100 dark:bg-zinc-800 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded font-mono text-[0.9em]" {...props}>
+        <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-[0.9em]" style={{ color: "var(--site-primary)" }} {...props}>
           {children}
         </code>
       );
@@ -160,7 +160,7 @@ export function BlogDetailPage() {
           <>
             <Link
               to="/blog"
-              className="inline-flex items-center space-x-2 text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 transition-colors mb-12 group"
+              className="link-primary inline-flex items-center space-x-2 text-zinc-500 dark:text-zinc-400 mb-12 group"
             >
               <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
               <span className="text-sm font-medium">Back to blog</span>
@@ -194,7 +194,7 @@ export function BlogDetailPage() {
                 <div>
                   <Link
                     to={`/author/${post.author_username ?? ""}`}
-                    className="text-base font-bold text-zinc-900 dark:text-zinc-100 hover:text-emerald-600 transition-colors"
+                    className="link-primary text-base font-bold text-zinc-900 dark:text-zinc-100"
                   >
                     {post.author_name}
                   </Link>
@@ -228,7 +228,7 @@ export function BlogDetailPage() {
           </>
         }
         body={
-          <div className="prose prose-zinc dark:prose-invert prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-a:text-emerald-600 prose-img:rounded-2xl">
+          <div className="prose prose-zinc dark:prose-invert prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-img:rounded-2xl">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[rehypeRaw, rehypeSanitize]}

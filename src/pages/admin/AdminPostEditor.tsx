@@ -171,7 +171,7 @@ export function AdminPostEditor() {
             </span>
           )}
           {saveStatus === "saved" && (
-            <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+            <span className="flex items-center gap-1.5 text-sm text-[var(--site-primary)]">
               <Check size={16} />
               Saved
             </span>
@@ -188,7 +188,7 @@ export function AdminPostEditor() {
           </button>
           <button
             onClick={handleSubmit}
-            className="flex items-center space-x-2 bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-500 transition-colors shadow-sm font-medium"
+            className="btn-primary flex items-center space-x-2 px-6 py-2 rounded-lg shadow-sm font-medium"
           >
             <Save size={18} />
             <span>{isEdit ? "Update Post" : "Publish Post"}</span>
@@ -206,7 +206,7 @@ export function AdminPostEditor() {
                 value={formData.title}
                 onChange={(e) => { markEdited(); setFormData((prev) => ({ ...prev, title: e.target.value })); }}
                 onBlur={generateSlug}
-                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-lg font-bold"
+                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus-ring-primary outline-none transition-all text-lg font-bold"
                 placeholder="Enter post title..."
                 required
               />
@@ -217,7 +217,7 @@ export function AdminPostEditor() {
                 type="text"
                 value={formData.slug}
                 onChange={(e) => { markEdited(); setFormData((prev) => ({ ...prev, slug: e.target.value })); }}
-                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm font-mono"
+                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus-ring-primary outline-none transition-all text-sm font-mono"
                 placeholder="post-slug-url"
                 required
               />
@@ -256,7 +256,7 @@ export function AdminPostEditor() {
                   onChange={(e) => { markEdited(); setFormData((prev) => ({ ...prev, is_published: e.target.checked })); }}
                   className="sr-only peer" 
                 />
-                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--site-primary)]"></div>
                 <span className="ml-3 text-sm font-medium text-zinc-700">
                   {formData.is_published ? "Published" : "Draft"}
                 </span>
@@ -267,7 +267,7 @@ export function AdminPostEditor() {
               <select
                 value={formData.category_id}
                 onChange={(e) => { markEdited(); setFormData((prev) => ({ ...prev, category_id: e.target.value })); }}
-                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus-ring-primary outline-none transition-all text-sm"
                 required
               >
                 <option value="">Select Category</option>
@@ -282,7 +282,7 @@ export function AdminPostEditor() {
                 type="number"
                 value={formData.reading_time}
                 onChange={(e) => { markEdited(); setFormData((prev) => ({ ...prev, reading_time: parseInt(e.target.value) || 0 })); }}
-                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus-ring-primary outline-none transition-all text-sm"
               />
             </div>
           </div>
@@ -317,7 +317,7 @@ export function AdminPostEditor() {
               type="text"
               value={formData.featured_image}
               onChange={(e) => { markEdited(); setFormData((prev) => ({ ...prev, featured_image: e.target.value })); }}
-              className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-xs font-mono"
+              className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus-ring-primary outline-none transition-all text-xs font-mono"
               placeholder="https://..."
             />
           </div>
@@ -327,7 +327,7 @@ export function AdminPostEditor() {
             <textarea
               value={formData.excerpt}
               onChange={(e) => { markEdited(); setFormData((prev) => ({ ...prev, excerpt: e.target.value })); }}
-              className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all min-h-[100px] text-sm leading-relaxed"
+              className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus-ring-primary outline-none transition-all min-h-[100px] text-sm leading-relaxed"
               placeholder="Brief summary of the post..."
               required
             />

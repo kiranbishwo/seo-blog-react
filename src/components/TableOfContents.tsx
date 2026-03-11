@@ -36,9 +36,9 @@ export function TableOfContents({ items, activeId, className }: TableOfContentsP
             <a
               href={`#${item.id}`}
               className={cn(
-                "block py-1 text-zinc-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors border-l-2 -ml-[2px] pl-3",
+                "block py-1 text-zinc-600 dark:text-zinc-400 hover:text-[var(--site-primary)] transition-colors border-l-2 -ml-[2px] pl-3",
                 activeId === item.id
-                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 font-medium"
+                  ? "border-[var(--site-primary)] text-[var(--site-primary)] font-medium"
                   : "border-transparent"
               )}
             >

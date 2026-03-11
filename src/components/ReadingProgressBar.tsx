@@ -10,7 +10,7 @@ export function ReadingProgressBar() {
 
   return (
     <motion.div
-      className="fixed top-16 left-0 right-0 h-1 bg-emerald-600 origin-left z-50"
+      className="fixed top-16 left-0 right-0 h-1 bg-[var(--site-primary)] origin-left z-50"
       style={{ scaleX }}
       aria-hidden
     />

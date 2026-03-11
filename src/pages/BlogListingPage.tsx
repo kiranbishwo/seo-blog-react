@@ -91,7 +91,7 @@ export function BlogListingPage() {
             placeholder="Search articles..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-3 pl-12 pr-6 text-zinc-900 dark:text-zinc-100 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
+            className="w-full rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-3 pl-12 pr-6 text-zinc-900 dark:text-zinc-100 outline-none focus-ring-primary transition-all"
           />
         </div>
 
@@ -105,7 +105,7 @@ export function BlogListingPage() {
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
               !categorySlug
                 ? "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
-                : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600"
+                : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-[var(--site-primary)] hover:text-[var(--site-primary)]"
             }`}
           >
             All
@@ -116,8 +116,8 @@ export function BlogListingPage() {
               onClick={() => setFilter("category", categorySlug === cat.slug ? "" : cat.slug)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                 categorySlug === cat.slug
-                  ? "bg-emerald-600 text-white"
-                  : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600"
+                  ? "bg-[var(--site-primary)] text-white"
+                  : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-[var(--site-primary)] hover:text-[var(--site-primary)]"
               }`}
             >
               {cat.name}
@@ -134,7 +134,7 @@ export function BlogListingPage() {
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               !tagSlug
                 ? "bg-zinc-100 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
-                : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600"
+                : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-[var(--site-primary)] hover:text-[var(--site-primary)]"
             }`}
           >
             All
@@ -145,8 +145,8 @@ export function BlogListingPage() {
               onClick={() => setFilter("tag", tagSlug === t.slug ? "" : t.slug)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 tagSlug === t.slug
-                  ? "bg-emerald-600 text-white"
-                  : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600"
+                  ? "bg-[var(--site-primary)] text-white"
+                  : "border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-[var(--site-primary)] hover:text-[var(--site-primary)]"
               }`}
             >
               #{t.name}
@@ -177,7 +177,7 @@ export function BlogListingPage() {
               <button
                 onClick={() => setPage(currentPage - 1)}
                 disabled={currentPage <= 1}
-                className="p-2 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                className="p-2 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-[var(--site-primary)] hover:text-[var(--site-primary)] disabled:opacity-50 disabled:pointer-events-none transition-colors"
                 aria-label="Previous page"
               >
                 <ChevronLeft size={24} />
@@ -188,7 +188,7 @@ export function BlogListingPage() {
               <button
                 onClick={() => setPage(currentPage + 1)}
                 disabled={currentPage >= totalPages}
-                className="p-2 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-emerald-500 hover:text-emerald-600 disabled:opacity-50 disabled:pointer-events-none transition-colors"
+                className="p-2 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:border-[var(--site-primary)] hover:text-[var(--site-primary)] disabled:opacity-50 disabled:pointer-events-none transition-colors"
                 aria-label="Next page"
               >
                 <ChevronRight size={24} />
@@ -206,7 +206,7 @@ export function BlogListingPage() {
               setSearchQuery("");
               setSearchParams({});
             }}
-            className="mt-4 text-emerald-600 font-semibold hover:underline"
+            className="mt-4 link-primary font-semibold hover:underline"
           >
             Clear filters
           </button>

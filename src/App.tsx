@@ -9,6 +9,7 @@ import { TagPage } from "./pages/TagPage";
 import { AuthorPage } from "./pages/AuthorPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ContactPage } from "./pages/ContactPage";
+import { LegalPage } from "./pages/LegalPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { AdminLayout } from "./components/AdminLayout";
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
@@ -19,9 +20,12 @@ import { AdminTagManager } from "./pages/admin/AdminTagManager";
 import { AdminTeamManager } from "./pages/admin/AdminTeamManager";
 import { AdminUserManager } from "./pages/admin/AdminUserManager";
 import { AdminProfilePage } from "./pages/admin/AdminProfilePage";
+import { AdminSettingsPage } from "./pages/admin/AdminSettingsPage";
+import { AdminContactRequests } from "./pages/admin/AdminContactRequests";
 import { AdminLoginPage } from "./pages/admin/AdminLoginPage";
 import { ThemeProvider } from "./hooks/useTheme";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { SiteSettingsProvider } from "./contexts/SiteSettingsContext";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -45,6 +49,7 @@ export default function App() {
     <HelmetProvider>
       <ThemeProvider>
         <AuthProvider>
+        <SiteSettingsProvider>
         <Router>
           <Routes>
             {/* Public Routes */}
@@ -56,6 +61,7 @@ export default function App() {
             <Route path="/author/:username" element={<PublicWrap><AuthorPage /></PublicWrap>} />
             <Route path="/about" element={<PublicWrap><AboutPage /></PublicWrap>} />
             <Route path="/contact" element={<PublicWrap><ContactPage /></PublicWrap>} />
+            <Route path="/legal/:slug" element={<PublicWrap><LegalPage /></PublicWrap>} />
 
             {/* 404 - unknown routes */}
             <Route path="*" element={<PublicWrap><NotFoundPage /></PublicWrap>} />
@@ -73,12 +79,15 @@ export default function App() {
             <Route path="posts/edit/:id" element={<AdminPostEditor />} />
             <Route path="categories" element={<AdminCategoryManager />} />
             <Route path="tags" element={<AdminTagManager />} />
+            <Route path="contact-requests" element={<RequireAdmin><AdminContactRequests /></RequireAdmin>} />
             <Route path="teams" element={<RequireAdmin><AdminTeamManager /></RequireAdmin>} />
             <Route path="users" element={<RequireAdmin><AdminUserManager /></RequireAdmin>} />
+            <Route path="settings" element={<RequireAdmin><AdminSettingsPage /></RequireAdmin>} />
             <Route path="profile" element={<AdminProfilePage />} />
           </Route>
         </Routes>
       </Router>
+        </SiteSettingsProvider>
         </AuthProvider>
       </ThemeProvider>
     </HelmetProvider>

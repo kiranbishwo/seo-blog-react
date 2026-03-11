@@ -52,7 +52,7 @@ export function AdminTagManager() {
                   setNewName(e.target.value);
                   setNewSlug(e.target.value.toLowerCase().replace(/ /g, "-"));
                 }}
-                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus-ring-primary outline-none transition-all text-sm"
                 placeholder="e.g. React"
                 required
               />
@@ -63,14 +63,14 @@ export function AdminTagManager() {
                 type="text"
                 value={newSlug}
                 onChange={(e) => setNewSlug(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm font-mono"
+                className="w-full px-4 py-2 rounded-lg border border-zinc-200 focus:ring-2 focus-ring-primary outline-none transition-all text-sm font-mono"
                 placeholder="react"
                 required
               />
             </div>
             <button
               type="submit"
-              className="w-full flex items-center justify-center space-x-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-500 transition-colors font-medium"
+              className="btn-primary w-full flex items-center justify-center space-x-2 px-4 py-2 rounded-lg font-medium"
             >
               <Plus size={18} />
               <span>Add Tag</span>

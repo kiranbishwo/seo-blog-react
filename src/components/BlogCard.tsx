@@ -38,7 +38,7 @@ export function BlogCard({ post }: BlogCardProps) {
           <CategoryBadge name={post.category_name ?? "Uncategorized"} slug={categorySlug || "uncategorized"} />
         </div>
         <Link to={`/blog/${post.slug}`}>
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 transition-colors">
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 group-hover:text-[var(--site-primary)] transition-colors">
             {post.title}
           </h2>
         </Link>
@@ -69,7 +69,7 @@ export function BlogCard({ post }: BlogCardProps) {
               </span>
             )}
             {authorLink ? (
-              <Link to={authorLink} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+              <Link to={authorLink} className="link-primary">
                 {authorName}
               </Link>
             ) : (

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, FileText, Layers, Tag, LogOut, ExternalLink, Users, Building2, ChevronDown, User } from "lucide-react";
+import { LayoutDashboard, FileText, Layers, Tag, LogOut, ExternalLink, Users, Building2, ChevronDown, User, Settings, Inbox } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -45,8 +45,10 @@ export function AdminLayout() {
     { name: "Tags", path: "/admin/tags", icon: Tag },
     ...(user?.role === "admin"
       ? [
+          { name: "Contact requests", path: "/admin/contact-requests", icon: Inbox },
           { name: "Teams", path: "/admin/teams", icon: Building2 },
           { name: "Users", path: "/admin/users", icon: Users },
+          { name: "Settings", path: "/admin/settings", icon: Settings },
         ]
       : []),
   ];
@@ -57,7 +59,7 @@ export function AdminLayout() {
       <aside className="fixed inset-y-0 left-0 w-64 border-r border-zinc-200 bg-white flex flex-col">
         <div className="flex h-16 items-center px-6 border-b border-zinc-100">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="h-6 w-6 rounded bg-emerald-600 flex items-center justify-center">
+            <div className="h-6 w-6 rounded flex items-center justify-center bg-[var(--site-primary)]">
               <span className="text-white font-bold text-sm">L</span>
             </div>
             <span className="font-bold text-zinc-900">Lumina Admin</span>
@@ -74,7 +76,7 @@ export function AdminLayout() {
                 cn(
                   "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-emerald-50 text-emerald-700"
+                    ? "bg-[var(--site-primary-muted)] text-[var(--site-primary)]"
                     : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
                 )
               }
@@ -106,7 +108,7 @@ export function AdminLayout() {
               aria-expanded={dropdownOpen}
               aria-haspopup="true"
             >
-              <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center text-sm font-medium">
+              <div className="w-8 h-8 rounded-full bg-[var(--site-primary)] text-white flex items-center justify-center text-sm font-medium">
                 {user ? getInitials(user.name, user.email) : "?"}
               </div>
               <span className="text-sm font-medium text-zinc-900 max-w-[120px] truncate">{displayName}</span>

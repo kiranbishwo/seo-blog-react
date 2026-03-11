@@ -1,13 +1,42 @@
 import { useState } from "react";
 import { SEO } from "../components/SEO";
-import { Mail, Send } from "lucide-react";
+import { Mail, Send, Phone, MapPin } from "lucide-react";
+import { useSiteSettings } from "../contexts/SiteSettingsContext";
 
 export function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { contactEmail, contactPhone, contactAddress, contactSuccessMessage } = useSiteSettings();
+  const hasContactInfo = contactEmail?.trim() || contactPhone?.trim() || contactAddress?.trim();
+  const successMessage = contactSuccessMessage?.trim() || "Thanks for reaching out. We'll get back to you soon.";
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitError(null);
+    const form = e.currentTarget;
+    const name = (form.elements.namedItem("name") as HTMLInputElement).value.trim();
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value.trim();
+    const message = (form.elements.namedItem("message") as HTMLTextAreaElement).value.trim();
+    if (!name || !email || !message) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setSubmitted(true);
+      } else {
+        setSubmitError(data?.error || "Something went wrong. Please try again.");
+      }
+    } catch {
+      setSubmitError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -24,13 +53,18 @@ export function ContactPage() {
       </p>
 
       {submitted ? (
-        <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-8 text-center">
-          <p className="text-emerald-800 dark:text-emerald-200 font-medium">
-            Thanks for reaching out. We&apos;ll get back to you soon.
+        <div className="rounded-2xl border p-8 text-center badge-primary" style={{ borderColor: "var(--site-primary)", backgroundColor: "var(--site-primary-muted)" }}>
+          <p className="font-medium" style={{ color: "var(--site-primary)" }}>
+            {successMessage}
           </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {submitError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 px-4 py-3 text-red-700 dark:text-red-300 text-sm">
+              {submitError}
+            </div>
+          )}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
               Name
@@ -40,7 +74,7 @@ export function ContactPage() {
               name="name"
               type="text"
               required
-              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-zinc-900 dark:text-zinc-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-zinc-900 dark:text-zinc-100 focus-ring-primary transition-all"
             />
           </div>
           <div>
@@ -52,7 +86,7 @@ export function ContactPage() {
               name="email"
               type="email"
               required
-              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-zinc-900 dark:text-zinc-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-zinc-900 dark:text-zinc-100 focus-ring-primary transition-all"
             />
           </div>
           <div>
@@ -64,25 +98,46 @@ export function ContactPage() {
               name="message"
               rows={5}
               required
-              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-zinc-900 dark:text-zinc-100 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all resize-none"
+              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-zinc-900 dark:text-zinc-100 focus-ring-primary transition-all resize-none"
             />
           </div>
           <button
             type="submit"
-            className="inline-flex items-center space-x-2 rounded-full bg-emerald-600 px-8 py-4 font-semibold text-white hover:bg-emerald-500 transition-colors"
+            disabled={submitting}
+            className="btn-primary inline-flex items-center space-x-2 rounded-full px-8 py-4 font-semibold disabled:opacity-70"
           >
             <Send size={18} />
-            <span>Send message</span>
+            <span>{submitting ? "Sending…" : "Send message"}</span>
           </button>
         </form>
       )}
 
-      <div className="mt-12 flex items-center space-x-4 text-zinc-600 dark:text-zinc-400">
-        <Mail size={20} />
-        <a href="mailto:hello@lumina.blog" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-          hello@lumina.blog
-        </a>
-      </div>
+      {hasContactInfo && (
+        <div className="mt-12 space-y-4 text-zinc-600 dark:text-zinc-400">
+          {contactEmail?.trim() && (
+            <div className="flex items-center space-x-4">
+              <Mail size={20} className="shrink-0" />
+              <a href={`mailto:${contactEmail.trim()}`} className="link-primary">
+                {contactEmail.trim()}
+              </a>
+            </div>
+          )}
+          {contactPhone?.trim() && (
+            <div className="flex items-center space-x-4">
+              <Phone size={20} className="shrink-0" />
+              <a href={`tel:${contactPhone.trim().replace(/\s/g, "")}`} className="link-primary">
+                {contactPhone.trim()}
+              </a>
+            </div>
+          )}
+          {contactAddress?.trim() && (
+            <div className="flex items-start space-x-4">
+              <MapPin size={20} className="shrink-0 mt-0.5" />
+              <span className="whitespace-pre-line">{contactAddress.trim()}</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

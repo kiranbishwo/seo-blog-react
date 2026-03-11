@@ -33,7 +33,7 @@ export function AdminPostList() {
         </div>
         <Link 
           to="/admin/posts/new"
-          className="flex items-center space-x-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-500 transition-colors shadow-sm"
+          className="btn-primary flex items-center space-x-2 px-4 py-2 rounded-lg shadow-sm"
         >
           <PlusCircle size={18} />
           <span>New Post</span>
@@ -72,7 +72,7 @@ export function AdminPostList() {
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       post.is_published 
-                        ? "bg-emerald-100 text-emerald-800" 
+                        ? "badge-primary" 
                         : "bg-zinc-100 text-zinc-800"
                     }`}>
                       {post.is_published ? "Published" : "Draft"}
@@ -84,7 +84,7 @@ export function AdminPostList() {
                     <Link 
                       to={`/blog/${post.slug}`} 
                       target="_blank"
-                      className="inline-flex p-2 text-zinc-400 hover:text-emerald-600 transition-colors"
+                      className="inline-flex p-2 text-zinc-400 hover:text-[var(--site-primary)] transition-colors"
                     >
                       <Eye size={18} />
                     </Link>

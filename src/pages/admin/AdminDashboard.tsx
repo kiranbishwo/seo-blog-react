@@ -13,7 +13,7 @@ export function AdminDashboard() {
 
   const cards = [
     { name: "Total Posts", value: stats.posts, icon: FileText, color: "text-blue-600", bg: "bg-blue-50" },
-    { name: "Categories", value: stats.categories, icon: Layers, color: "text-emerald-600", bg: "bg-emerald-50" },
+    { name: "Categories", value: stats.categories, icon: Layers, color: "text-[var(--site-primary)]", bg: "bg-[var(--site-primary-muted)]" },
     { name: "Tags", value: stats.tags, icon: Tag, color: "text-purple-600", bg: "bg-purple-50" },
     { name: "Total Views", value: "1.2k", icon: TrendingUp, color: "text-orange-600", bg: "bg-orange-50" },
   ];
@@ -24,7 +24,7 @@ export function AdminDashboard() {
         <h1 className="text-2xl font-bold text-zinc-900">Dashboard Overview</h1>
         <Link 
           to="/admin/posts/new"
-          className="flex items-center space-x-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-500 transition-colors shadow-sm"
+          className="btn-primary flex items-center space-x-2 px-4 py-2 rounded-lg shadow-sm"
         >
           <PlusCircle size={18} />
           <span>New Post</span>
@@ -67,7 +67,7 @@ export function AdminDashboard() {
           <h3 className="font-bold text-zinc-900 mb-4">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-4">
             <Link to="/admin/categories" className="p-4 rounded-lg border border-zinc-100 hover:bg-zinc-50 transition-colors text-center">
-              <Layers className="mx-auto mb-2 text-emerald-600" size={20} />
+              <Layers className="mx-auto mb-2 text-[var(--site-primary)]" size={20} />
               <span className="text-sm font-medium">Add Category</span>
             </Link>
             <Link to="/admin/tags" className="p-4 rounded-lg border border-zinc-100 hover:bg-zinc-50 transition-colors text-center">

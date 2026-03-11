@@ -50,7 +50,7 @@ export function HomePage() {
       {/* Hero Section */}
       <section className="relative min-h-[85vh] flex flex-col justify-center overflow-hidden bg-zinc-900 py-20 sm:py-28">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.25),transparent)]" />
+          <div className="absolute inset-0 bg-[var(--site-gradient-radial)]" />
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
         </div>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative w-full">
@@ -60,13 +60,13 @@ export function HomePage() {
             transition={{ duration: 0.7, ease: "easeOut" }}
             className="max-w-4xl"
           >
-            <p className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-2 text-sm text-emerald-300/90 mb-8">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-2 text-sm mb-8" style={{ color: "color-mix(in srgb, var(--site-primary) 80%, white)" }}>
               <Sparkles size={16} />
               Built for builders and thinkers
             </p>
             <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl mb-8 leading-[1.1]">
               Insights for the{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
+              <span className="text-transparent bg-clip-text bg-[var(--site-gradient)]">
                 Modern Builder
               </span>
               .
@@ -77,7 +77,7 @@ export function HomePage() {
             <div className="flex flex-wrap gap-4 mb-16">
               <Link
                 to="/blog"
-                className="group rounded-full bg-emerald-600 px-8 py-4 text-lg font-semibold text-white hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/25 hover:shadow-emerald-500/30 hover:scale-[1.02]"
+                className="btn-primary group inline-flex items-center rounded-full px-8 py-4 text-lg font-semibold hover:scale-[1.02]"
               >
                 Start Reading
                 <ArrowRight className="inline-block ml-2 -translate-x-0 group-hover:translate-x-1 transition-transform" size={20} />
@@ -132,9 +132,9 @@ export function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
-                className="rounded-2xl bg-white dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm hover:shadow-md hover:border-emerald-500/30 dark:hover:border-emerald-500/30 transition-all"
+                className="rounded-2xl bg-white dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 p-8 shadow-sm hover:shadow-md hover:border-[var(--site-primary)]/30 transition-all"
               >
-                <div className="rounded-xl bg-emerald-500/10 w-12 h-12 flex items-center justify-center mb-6 text-emerald-600 dark:text-emerald-400">
+                <div className="rounded-xl bg-[var(--site-primary-muted)] w-12 h-12 flex items-center justify-center mb-6 text-[var(--site-primary)]">
                   <item.icon size={24} />
                 </div>
                 <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">{item.title}</h3>
@@ -153,7 +153,7 @@ export function HomePage() {
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="text-sm font-medium text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-6"
+              className="text-sm font-medium text-[var(--site-primary)] uppercase tracking-wider mb-6"
             >
               Featured article
             </motion.p>
@@ -173,13 +173,13 @@ export function HomePage() {
                     />
                   </div>
                   <div className="p-10 sm:p-12 lg:p-16 flex flex-col justify-center">
-                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4 group-hover:text-[var(--site-primary)] transition-colors">
                       {featuredPost.title}
                     </h2>
                     <p className="text-lg text-zinc-600 dark:text-zinc-400 mb-8 line-clamp-3">
                       {featuredPost.excerpt}
                     </p>
-                    <span className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <span className="inline-flex items-center gap-2 text-[var(--site-primary)] font-semibold">
                       Read article
                       <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
                     </span>
@@ -205,7 +205,7 @@ export function HomePage() {
             </div>
             <Link
               to="/blog"
-              className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold hover:text-emerald-500 transition-colors shrink-0"
+              className="link-primary inline-flex items-center gap-2 font-semibold shrink-0"
             >
               View all posts
               <ArrowRight size={20} />
@@ -247,8 +247,8 @@ export function HomePage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-emerald-500/10 p-2.5">
-                  <TrendingUp size={28} className="text-emerald-600 dark:text-emerald-400" />
+                <div className="rounded-xl bg-[var(--site-primary-muted)] p-2.5">
+                  <TrendingUp size={28} className="text-[var(--site-primary)]" />
                 </div>
                 <div>
                   <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -259,9 +259,9 @@ export function HomePage() {
               </div>
               <Link
                 to="/blog"
-                className="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold hover:text-emerald-500 transition-colors shrink-0"
-              >
-                View all
+className="link-primary inline-flex items-center gap-2 font-semibold shrink-0"
+            >
+              View all
                 <ArrowRight size={20} />
               </Link>
             </div>
@@ -279,8 +279,8 @@ export function HomePage() {
         <section className="py-24 sm:py-32 bg-zinc-50 dark:bg-zinc-900/50">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 mb-14">
-              <div className="rounded-xl bg-emerald-500/10 p-2.5">
-                <FolderTree size={28} className="text-emerald-600 dark:text-emerald-400" />
+              <div className="rounded-xl bg-[var(--site-primary-muted)] p-2.5">
+                <FolderTree size={28} className="text-[var(--site-primary)]" />
               </div>
               <div>
                 <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -294,7 +294,7 @@ export function HomePage() {
                 <Link
                   key={cat.id}
                   to={`/category/${cat.slug}`}
-                  className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-8 py-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:shadow-lg transition-all"
+                  className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-8 py-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100 hover:border-[var(--site-primary)] hover:text-[var(--site-primary)] hover:shadow-lg transition-all"
                 >
                   {cat.name}
                 </Link>
@@ -307,7 +307,7 @@ export function HomePage() {
       {/* Quote / testimonial strip */}
       <section className="py-24 sm:py-32">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-          <Quote className="mx-auto text-emerald-500/40 mb-8" size={48} />
+          <Quote className="mx-auto mb-8 opacity-40" size={48} style={{ color: "var(--site-primary)" }} />
           <blockquote className="text-2xl sm:text-3xl font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed mb-8">
             “Great content is the best growth tool. We build ours to be clear, useful, and easy to find.”
           </blockquote>
@@ -318,9 +318,9 @@ export function HomePage() {
       {/* Newsletter */}
       <section className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 px-8 py-20 sm:px-16 sm:py-28 text-center relative overflow-hidden">
+          <div className="rounded-3xl px-8 py-20 sm:px-16 sm:py-28 text-center relative overflow-hidden" style={{ background: "linear-gradient(to bottom right, var(--site-primary), var(--site-secondary))" }}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 right-0 w-96 h-96 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 opacity-20" style={{ backgroundColor: "var(--site-primary)" }} />
             <div className="relative z-10 max-w-2xl mx-auto">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mb-8">
                 <Mail className="text-white" size={32} />
@@ -328,7 +328,7 @@ export function HomePage() {
               <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl mb-6">
                 Subscribe to our newsletter
               </h2>
-              <p className="text-emerald-100 text-lg mb-10 leading-relaxed">
+              <p className="text-white/90 text-lg mb-10 leading-relaxed">
                 Get the latest insights, tutorials, and updates delivered straight to your inbox. No spam, ever.
               </p>
               <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
@@ -360,7 +360,7 @@ export function HomePage() {
           </p>
           <Link
             to="/blog"
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-10 py-4 text-lg font-semibold text-white hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/25"
+            className="btn-primary inline-flex items-center gap-2 rounded-full px-10 py-4 text-lg font-semibold"
           >
             Browse all articles
             <ArrowRight size={20} />

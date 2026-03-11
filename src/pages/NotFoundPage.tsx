@@ -19,7 +19,7 @@ export function NotFoundPage() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             to="/"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-500 transition-colors"
+            className="btn-primary inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-semibold"
           >
             <Home size={20} />
             Back to home

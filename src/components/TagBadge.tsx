@@ -12,7 +12,7 @@ export function TagBadge({ name, slug, className }: TagBadgeProps) {
     <Link
       to={`/tag/${slug}`}
       className={cn(
-        "inline-flex items-center rounded-full border border-zinc-200 px-3 py-1 text-sm font-medium text-zinc-600 hover:border-emerald-500 hover:text-emerald-600 transition-colors",
+        "inline-flex items-center rounded-full border border-zinc-200 px-3 py-1 text-sm font-medium text-zinc-600 hover:border-[var(--site-primary)] hover:text-[var(--site-primary)] transition-colors",
         className
       )}
     >

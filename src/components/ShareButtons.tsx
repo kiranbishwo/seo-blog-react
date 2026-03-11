@@ -40,7 +40,7 @@ export function ShareButtons({ url, title, description = "", className = "" }: S
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on Twitter"
-        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 hover:text-emerald-600 transition-colors"
+        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 hover:text-[var(--site-primary)] transition-colors"
       >
         <Twitter size={20} />
       </a>
@@ -49,7 +49,7 @@ export function ShareButtons({ url, title, description = "", className = "" }: S
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on LinkedIn"
-        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 hover:text-emerald-600 transition-colors"
+        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 hover:text-[var(--site-primary)] transition-colors"
       >
         <Linkedin size={20} />
       </a>
@@ -58,7 +58,7 @@ export function ShareButtons({ url, title, description = "", className = "" }: S
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on Facebook"
-        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 hover:text-emerald-600 transition-colors"
+        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 hover:text-[var(--site-primary)] transition-colors"
       >
         <Facebook size={20} />
       </a>
@@ -66,7 +66,7 @@ export function ShareButtons({ url, title, description = "", className = "" }: S
         type="button"
         onClick={handleNativeShare}
         aria-label="Share"
-        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 hover:text-emerald-600 transition-colors"
+        className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-500 hover:text-[var(--site-primary)] transition-colors"
       >
         <Share2 size={20} />
       </button>

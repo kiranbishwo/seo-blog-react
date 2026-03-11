@@ -142,7 +142,7 @@ export function AdminUserManager() {
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="flex items-center space-x-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-500 transition-colors font-medium"
+            className="btn-primary flex items-center space-x-2 px-4 py-2 rounded-lg font-medium"
           >
             <Plus size={18} />
             <span>Add User</span>
@@ -203,7 +203,7 @@ export function AdminUserManager() {
               </select>
             </div>
             <div className="flex gap-2">
-              <button type="submit" className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-500">
+              <button type="submit" className="btn-primary px-4 py-2 rounded-lg text-sm font-medium">
                 Create
               </button>
               <button type="button" onClick={() => setShowForm(false)} className="bg-zinc-200 text-zinc-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-zinc-300">
@@ -271,7 +271,7 @@ export function AdminUserManager() {
                             placeholder="Leave blank to keep"
                           />
                         </div>
-                        <button type="submit" className="bg-emerald-600 text-white px-3 py-1.5 rounded text-sm">Save</button>
+                        <button type="submit" className="btn-primary px-3 py-1.5 rounded text-sm">Save</button>
                         <button type="button" onClick={() => setEditingId(null)} className="bg-zinc-200 text-zinc-700 px-3 py-1.5 rounded text-sm">Cancel</button>
                       </form>
                     </td>
@@ -287,7 +287,7 @@ export function AdminUserManager() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <button onClick={() => startEdit(u)} className="p-2 text-zinc-400 hover:text-emerald-600 transition-colors">
+                      <button onClick={() => startEdit(u)} className="p-2 text-zinc-400 hover:text-[var(--site-primary)] transition-colors">
                         <Pencil size={16} />
                       </button>
                       <button onClick={() => handleDelete(u.id)} className="p-2 text-zinc-400 hover:text-red-600 transition-colors">

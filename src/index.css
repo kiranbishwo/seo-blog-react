@@ -13,6 +13,54 @@
   }
 }
 
+/* Site theme: derived from --site-primary / --site-secondary (set by SiteSettingsContext) */
+:root {
+  --site-primary-hover: color-mix(in srgb, var(--site-primary, #059669) 85%, white);
+  --site-primary-muted: color-mix(in srgb, var(--site-primary, #059669) 12%, transparent);
+  --site-primary-ring: color-mix(in srgb, var(--site-primary, #059669) 20%, transparent);
+  --site-shadow: 0 10px 40px -10px color-mix(in srgb, var(--site-primary, #059669) 25%, transparent);
+  --site-shadow-lg: 0 20px 50px -15px color-mix(in srgb, var(--site-primary, #059669) 30%, transparent);
+  --site-gradient: linear-gradient(to right, var(--site-primary, #059669), var(--site-secondary, #10b981));
+  --site-gradient-radial: radial-gradient(ellipse 80% 80% at 50% -20%, color-mix(in srgb, var(--site-primary, #059669) 25%, transparent), transparent);
+}
+
+/* Utility classes for primary theme */
+.btn-primary {
+  background-color: var(--site-primary);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  box-shadow: var(--site-shadow);
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+  background-color: var(--site-primary-hover);
+  box-shadow: var(--site-shadow-lg);
+}
+.link-primary {
+  color: var(--site-primary);
+  transition: color 0.2s;
+}
+.link-primary:hover {
+  color: var(--site-primary-hover);
+}
+.focus-ring-primary {
+  outline: none;
+}
+.focus-ring-primary:focus {
+  border-color: var(--site-primary);
+  box-shadow: 0 0 0 2px var(--site-primary-ring);
+}
+.badge-primary {
+  background-color: var(--site-primary-muted);
+  color: var(--site-primary);
+}
+.selection-primary::selection {
+  background-color: var(--site-primary-muted);
+  color: var(--site-primary);
+}
+
 /* Custom Prose Styles for Medium-like Typography */
 .prose {
   @apply max-w-none;
@@ -31,7 +79,8 @@
 }
 
 .prose blockquote {
-  @apply border-l-4 border-emerald-500 pl-6 italic text-zinc-600 dark:text-zinc-400 my-8;
+  border-left: 4px solid var(--site-primary, #059669);
+  @apply pl-6 italic text-zinc-600 dark:text-zinc-400 my-8;
 }
 
 .prose pre {
@@ -39,7 +88,15 @@
 }
 
 .prose code {
-  @apply bg-zinc-100 dark:bg-zinc-800 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.5 rounded font-mono text-[0.9em];
+  color: var(--site-primary, #059669);
+  @apply bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-mono text-[0.9em];
+}
+
+.prose a {
+  color: var(--site-primary, #059669);
+}
+.prose a:hover {
+  color: var(--site-primary-hover);
 }
 
 .prose pre code {
