@@ -6,9 +6,20 @@ export function AdminCategoryManager() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [newName, setNewName] = useState("");
   const [newSlug, setNewSlug] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/categories").then(res => res.json()).then(setCategories);
+    setLoading(true);
+    setError(null);
+    fetch("/api/categories")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then(setCategories)
+      .catch((err) => setError(err?.message || "Could not load categories. Is the API running? Run: npm run dev:api"))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -38,6 +49,16 @@ export function AdminCategoryManager() {
         <h1 className="text-2xl font-bold text-zinc-900">Categories</h1>
         <p className="text-zinc-500 text-sm">Organize your posts into logical sections.</p>
       </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm">
+          {error}
+        </div>
+      )}
+
+      {loading && (
+        <p className="text-zinc-500 text-sm">Loading categories…</p>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1">

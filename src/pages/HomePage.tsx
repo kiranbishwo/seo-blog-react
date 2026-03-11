@@ -1,22 +1,27 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Post } from "../types";
+import { Category } from "../types";
 import { BlogCard } from "../components/BlogCard";
 import { SEO } from "../components/SEO";
-import { ArrowRight, Mail } from "lucide-react";
+import { ArrowRight, Mail, TrendingUp, FolderTree } from "lucide-react";
 import { motion } from "motion/react";
 
 export function HomePage() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/posts")
-      .then((res) => res.json())
-      .then((data) => {
-        setPosts(data);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch("/api/posts").then((r) => r.json()),
+      fetch("/api/categories").then((r) => r.json()),
+    ])
+      .then(([postsData, categoriesData]) => {
+        setPosts(postsData);
+        setCategories(categoriesData);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -24,6 +29,7 @@ export function HomePage() {
       <SEO 
         title="Modern Blog for Startups" 
         description="Lumina is a high-performance, SEO-optimized blog platform designed for modern startups and tech writers."
+        canonical={typeof window !== "undefined" ? window.location.origin + "/" : undefined}
       />
 
       {/* Hero Section */}
@@ -67,8 +73,8 @@ export function HomePage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between mb-12">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 mb-4">Latest Articles</h2>
-            <p className="text-zinc-600">Fresh perspectives from our team of writers.</p>
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4">Latest Articles</h2>
+            <p className="text-zinc-600 dark:text-zinc-400">Fresh perspectives from our team of writers.</p>
           </div>
           <Link to="/blog" className="hidden sm:flex items-center space-x-2 text-emerald-600 font-semibold hover:text-emerald-500 transition-colors">
             <span>View all posts</span>
@@ -95,6 +101,54 @@ export function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Popular posts - same as latest, first 3 highlighted */}
+      {!loading && posts.length > 3 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between mb-12">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+                <TrendingUp size={28} className="text-emerald-600" />
+                Popular reads
+              </h2>
+              <p className="text-zinc-600 dark:text-zinc-400">Most read and shared this week.</p>
+            </div>
+            <Link to="/blog" className="hidden sm:flex items-center space-x-2 text-emerald-600 font-semibold hover:text-emerald-500 transition-colors">
+              <span>View all</span>
+              <ArrowRight size={20} />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            {posts.slice(0, 3).map((post) => (
+              <BlogCard key={post.id} post={post} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Categories section */}
+      {!loading && categories.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12">
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
+              <FolderTree size={28} className="text-emerald-600" />
+              Browse by category
+            </h2>
+            <p className="text-zinc-600 dark:text-zinc-400">Find articles by topic.</p>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {categories.map((cat) => (
+              <Link
+                key={cat.id}
+                to={`/category/${cat.slug}`}
+                className="rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/50 px-6 py-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all"
+              >
+                {cat.name}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Newsletter */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
