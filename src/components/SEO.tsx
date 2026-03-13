@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { useSiteSettings } from "../contexts/SiteSettingsContext";
 
 interface SEOProps {
   title: string;
@@ -19,7 +20,8 @@ export function SEO({
   publishedAt,
   canonical,
 }: SEOProps) {
-  const siteName = "Lumina Blog";
+  const { projectName } = useSiteSettings();
+  const siteName = projectName ? `${projectName} Blog` : "Lumina Blog";
   const fullTitle = `${title} | ${siteName}`;
   const defaultImage = "https://picsum.photos/seed/lumina/1200/630";
   const ogImage = image || defaultImage;
@@ -36,6 +38,7 @@ export function SEO({
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
       <meta property="og:type" content={article ? "article" : "website"} />
+      {canonical && <meta property="og:url" content={canonical} />}
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
@@ -55,6 +58,7 @@ export function SEO({
             "@context": "https://schema.org",
             "@type": "BlogPosting",
             "headline": title,
+            "url": canonical,
             "image": [ogImage],
             "datePublished": publishedAt,
             "author": [
@@ -63,6 +67,12 @@ export function SEO({
                 "name": author,
               },
             ],
+            ...(siteName && {
+              publisher: {
+                "@type": "Organization",
+                "name": siteName,
+              },
+            }),
           })}
         </script>
       )}

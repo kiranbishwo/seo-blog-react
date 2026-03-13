@@ -65,6 +65,13 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     if (!loaded || !settings.googleAnalyticsScript?.trim() || gaInjected.current) return;
+    const headHasGa = Array.from(document.head.querySelectorAll("script")).some(
+      (s) => (s.src && (s.src.includes("googletagmanager.com") || s.src.includes("gtag"))) || s.textContent?.includes("googletagmanager.com")
+    );
+    if (headHasGa) {
+      gaInjected.current = true;
+      return;
+    }
     gaInjected.current = true;
     const container = document.createElement("div");
     container.innerHTML = settings.googleAnalyticsScript.trim();

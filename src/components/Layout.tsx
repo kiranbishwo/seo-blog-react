@@ -156,8 +156,8 @@ export function Footer() {
               <span className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{projectName || "Lumina"}</span>
             </Link>
             <p className="text-zinc-600 dark:text-zinc-400 max-w-sm mb-6 leading-relaxed">
-              A professional blog platform for modern startups. Share your stories,
-              insights, and updates with a clean, SEO-optimized experience.
+              The Bizzpur blog: study tips, exam guides, and updates for students
+              preparing for SEE, +2, and university exams in Nepal.
             </p>
             <div className="flex space-x-4">
               {socialLinks.map((link) => {
@@ -211,7 +211,16 @@ export function Footer() {
             {footerCopyright?.trim() || `© ${new Date().getFullYear()} ${projectName || "Lumina"}. All rights reserved.`}
           </p>
           <p className="text-sm text-zinc-400 dark:text-zinc-500">
-            Designed for high performance and SEO.
+            Built by{" "}
+            <a
+              href="https://aitrixlabs.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--site-primary)] hover:underline"
+            >
+              Aitrixians
+            </a>
+            . Powered by ideas that feel alien.
           </p>
         </div>
       </div>

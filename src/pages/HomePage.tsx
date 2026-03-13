@@ -42,8 +42,8 @@ export function HomePage() {
   return (
     <div className="space-y-0 pb-24">
       <SEO
-        title="Modern Blog for Startups"
-        description="Lumina is a high-performance, SEO-optimized blog platform designed for modern startups and tech writers."
+        title="Bizzpur Blog – Insights for Nepali Students | SEE, +2, Bachelor"
+        description="The Bizzpur blog: tips, study guides, and updates for students preparing for SEE, +2, and university exams in Nepal. Part of the Bizzpur education platform."
         canonical={typeof window !== "undefined" ? window.location.origin + "/" : undefined}
       />
 
@@ -62,17 +62,16 @@ export function HomePage() {
           >
             <p className="inline-flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-2 text-sm mb-8" style={{ color: "color-mix(in srgb, var(--site-primary) 80%, white)" }}>
               <Sparkles size={16} />
-              Built for builders and thinkers
+              The Bizzpur blog — tips & guides for students
             </p>
             <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl mb-8 leading-[1.1]">
-              Insights for the{" "}
+              Insights for{" "}
               <span className="text-transparent bg-clip-text bg-[var(--site-gradient)]">
-                Modern Builder
+                Nepali Students
               </span>
-              .
             </h1>
             <p className="text-xl sm:text-2xl text-zinc-400 mb-12 leading-relaxed max-w-2xl">
-              Deep dives into technology, design, and startup growth. Written by experts, designed for readers who build.
+              Study tips, exam guides, and updates from the Bizzpur team. For students preparing for SEE, +2, and university exams across Nepal.
             </p>
             <div className="flex flex-wrap gap-4 mb-16">
               <Link
@@ -86,7 +85,7 @@ export function HomePage() {
                 to="/about"
                 className="rounded-full bg-white/10 border border-white/20 px-8 py-4 text-lg font-semibold text-white hover:bg-white/15 transition-all backdrop-blur-sm"
               >
-                Our Story
+                About Bizzpur
               </Link>
             </div>
             <motion.div
@@ -103,7 +102,7 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Why Read Lumina */}
+      {/* Why Bizzpur */}
       <section className="py-24 sm:py-32 bg-zinc-50 dark:bg-zinc-900/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -113,18 +112,18 @@ export function HomePage() {
             className="text-center max-w-2xl mx-auto mb-16"
           >
             <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-4xl mb-4">
-              Why read with us
+              Why read the Bizzpur blog
             </h2>
             <p className="text-lg text-zinc-600 dark:text-zinc-400">
-              We focus on quality, clarity, and depth so you can stay ahead.
+              Practical tips, study guides, and updates to help you prepare for SEE, +2, and university exams.
             </p>
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { icon: Zap, title: "Fast & focused", desc: "No fluff. Get to the point and apply what you learn." },
-              { icon: PenLine, title: "Expert writers", desc: "Real practitioners sharing real experience." },
-              { icon: Search, title: "SEO-smart", desc: "Content built to be found and shared." },
-              { icon: BookOpen, title: "Easy to browse", desc: "Categories and search that actually work." },
+              { icon: Zap, title: "Past papers & solutions", desc: "Thousands of exam papers with verified solutions from teachers and experts." },
+              { icon: PenLine, title: "NEB & university-aligned", desc: "Content for SEE, +2, and bachelor levels (NEB, TU, KU, Pokhara University)." },
+              { icon: Search, title: "Free for everyone", desc: "No cost; reduce dependence on coaching and paid guides." },
+              { icon: BookOpen, title: "Download & organize", desc: "PDFs, subject categories, bookmarks, and notes for offline study." },
             ].map((item, i) => (
               <motion.div
                 key={item.title}
@@ -197,10 +196,10 @@ export function HomePage() {
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-14">
             <div>
               <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">
-                Latest Articles
+                Latest articles
               </h2>
               <p className="text-zinc-600 dark:text-zinc-400 text-lg">
-                Fresh perspectives from our team of writers.
+                Fresh study tips and guides from the Bizzpur team.
               </p>
             </div>
             <Link
@@ -284,9 +283,9 @@ className="link-primary inline-flex items-center gap-2 font-semibold shrink-0"
               </div>
               <div>
                 <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-                  Browse by category
+                  Browse by subject
                 </h2>
-                <p className="text-zinc-600 dark:text-zinc-400">Find articles by topic.</p>
+                <p className="text-zinc-600 dark:text-zinc-400">Find past papers by subject and level.</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-4">
@@ -309,9 +308,9 @@ className="link-primary inline-flex items-center gap-2 font-semibold shrink-0"
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
           <Quote className="mx-auto mb-8 opacity-40" size={48} style={{ color: "var(--site-primary)" }} />
           <blockquote className="text-2xl sm:text-3xl font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed mb-8">
-            “Great content is the best growth tool. We build ours to be clear, useful, and easy to find.”
+            “We keep study materials free so every student can prepare smarter and perform better.”
           </blockquote>
-          <p className="text-zinc-500 dark:text-zinc-400">— The Lumina team</p>
+          <p className="text-zinc-500 dark:text-zinc-400">— The Bizzpur team</p>
         </div>
       </section>
 
@@ -329,7 +328,7 @@ className="link-primary inline-flex items-center gap-2 font-semibold shrink-0"
                 Subscribe to our newsletter
               </h2>
               <p className="text-white/90 text-lg mb-10 leading-relaxed">
-                Get the latest insights, tutorials, and updates delivered straight to your inbox. No spam, ever.
+                Study tips, new articles, and updates from Bizzpur. No spam, ever.
               </p>
               <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
                 <input

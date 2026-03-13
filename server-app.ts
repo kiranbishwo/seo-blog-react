@@ -879,6 +879,7 @@ export function createApp(options: { baseUrl?: string }) {
     const posts = db.prepare("SELECT slug, published_at FROM posts WHERE is_published = 1 ORDER BY published_at DESC").all() as { slug: string; published_at: string }[];
     const categories = db.prepare("SELECT slug FROM categories").all() as { slug: string }[];
     const tags = db.prepare("SELECT slug FROM tags").all() as { slug: string }[];
+    const legalPages = db.prepare("SELECT slug, updated_at FROM legal_pages ORDER BY slug").all() as { slug: string; updated_at: string }[];
     res.type("application/xml");
     let xml = '<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
     xml += `<url><loc>${baseUrl}/</loc><changefreq>daily</changefreq><priority>1</priority></url>`;
@@ -893,6 +894,10 @@ export function createApp(options: { baseUrl?: string }) {
     });
     tags.forEach((t) => {
       xml += `<url><loc>${baseUrl}/tag/${t.slug}</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>`;
+    });
+    legalPages.forEach((lp) => {
+      const lastmod = lp.updated_at ? new Date(lp.updated_at).toISOString().slice(0, 10) : "";
+      xml += `<url><loc>${baseUrl}/legal/${lp.slug}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}<changefreq>monthly</changefreq><priority>0.4</priority></url>`;
     });
     xml += "</urlset>";
     res.send(xml);
@@ -912,5 +917,20 @@ export function createApp(options: { baseUrl?: string }) {
     res.json({ posts: postCount.count, categories: categoryCount.count, tags: tagCount.count });
   });
 
-  return { app, __dirname };
+  function serveIndex(_req: express.Request, res: express.Response) {
+    const htmlPath = path.join(__dirname, "dist", "index.html");
+    try {
+      let html = fs.readFileSync(htmlPath, "utf-8");
+      const row = db.prepare("SELECT google_analytics_script FROM site_settings WHERE id = 1").get() as { google_analytics_script: string } | undefined;
+      const ga = row?.google_analytics_script?.trim();
+      if (ga) {
+        html = html.replace("</head>", ga + "\n</head>");
+      }
+      res.type("text/html").send(html);
+    } catch {
+      res.status(404).send("Not found");
+    }
+  }
+
+  return { app, __dirname, serveIndex };
 }

@@ -7,7 +7,7 @@ const PORT = 3000;
 
 async function startServer() {
   const baseUrl = process.env.SITE_URL || `http://localhost:${PORT}`;
-  const { app, __dirname } = createApp({ baseUrl });
+  const { app, __dirname, serveIndex } = createApp({ baseUrl });
 
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -17,9 +17,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     app.use(express.static(path.join(__dirname, "dist")));
-    app.get("*", (_req, res) => {
-      res.sendFile(path.join(__dirname, "dist", "index.html"));
-    });
+    app.get("*", serveIndex);
   }
 
   app.listen(PORT, "0.0.0.0", () => {

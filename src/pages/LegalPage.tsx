@@ -1,12 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { SEO } from "../components/SEO";
+
+function stripHtmlAndTruncate(html: string, maxLen: number): string {
+  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return text.length <= maxLen ? text : text.slice(0, maxLen).trim() + "…";
+}
 
 export function LegalPage() {
   const { slug } = useParams<{ slug: string }>();
   const [page, setPage] = useState<{ title: string; content: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const description = useMemo(
+    () => (page?.content ? stripHtmlAndTruncate(page.content, 160) : page ? `Legal: ${page.title}` : ""),
+    [page]
+  );
+  const canonical =
+    typeof window !== "undefined" && slug ? `${window.location.origin}/legal/${slug}` : undefined;
 
   useEffect(() => {
     if (!slug) {
@@ -45,9 +56,11 @@ export function LegalPage() {
 
   return (
     <>
-      <Helmet>
-        <title>{page.title}</title>
-      </Helmet>
+      <SEO
+        title={page.title}
+        description={description || `Legal: ${page.title}`}
+        canonical={canonical}
+      />
       <article className="mx-auto max-w-3xl px-4 py-16">
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-8">{page.title}</h1>
         {page.content ? (
